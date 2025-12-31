@@ -1,5 +1,8 @@
 mod utils;
 
+mod core;
+pub mod nn;
+
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
