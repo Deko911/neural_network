@@ -1,18 +1,19 @@
-use std::{iter::Sum, ops::Div};
-
 pub struct StandardScale {
     mean: f32,
     std: f32,
 }
 
 impl StandardScale {
-    pub fn new<T>(data: &[Vec<T>]) -> Self
+    pub fn new() -> Self {
+        Self {
+            mean: 0.0,
+            std: 0.0,
+        }
+    }
+
+    pub fn fit<T>(&mut self, data: &[Vec<T>])
     where
-        T: PartialOrd,
         T: Copy,
-        T: Default,
-        T: Div<Output = T>,
-        T: Sum,
         f32: From<T>,
     {
         let mut count = 0;
@@ -34,32 +35,31 @@ impl StandardScale {
             .sum::<f32>()
             / count as f32;
         let std = sum.sqrt().max(1e-8);
-        println!("{}, {}", mean, std);
-        Self { mean, std }
+        self.mean = mean;
+        self.std = std;
     }
 
-    pub fn transform<T>(&self, x: T) -> f32
+    pub fn transform<T>(&self, input: &[T]) -> Vec<f32>
     where
+        T: Copy,
         f32: From<T>,
     {
-        (f32::from(x) - self.mean) / self.std
+        input.iter().map(|x| (f32::from(*x) - self.mean) / self.std).collect()
     }
 
     pub fn transform_batch<T>(&self, data: &[Vec<T>]) -> Vec<Vec<f32>>
     where
-        T: PartialOrd,
         T: Copy,
-        T: Default,
-        T: Div<Output = T>,
-        T: Sum,
         f32: From<T>,
     {
-        data.iter().map(|r| r.iter().map(|x| self.transform(*x)).collect()).collect()
+        data.iter()
+            .map(|r| self.transform(&r))
+            .collect()
     }
 
     pub fn inverse_transform<T>(&self, x: f32) -> T
     where
-        T: From<f32> 
+        T: From<f32>,
     {
         T::from(x * self.std + self.mean)
     }
