@@ -86,6 +86,17 @@ impl Model for PerceptronModel {
         (target - result) / (if target == &0.0 { 1.0 } else { *target })
     }
 
+    fn fit_raw(&mut self, input: &[Self::Input], target: &[Self::Output], epochs: usize) {
+        assert_eq!(
+            input.len(),
+            target.len(),
+            "There must be as many inputs as targets."
+        );
+        for _ in 0..epochs {
+            self.network.train_step(&input, target);
+        }
+    }
+
     fn fit(&mut self, input: &[Self::Input], target: &[Self::Output], epochs: usize) {
         assert_eq!(
             input.len(),

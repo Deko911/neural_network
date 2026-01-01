@@ -7,7 +7,7 @@ impl StandardScale {
     pub fn new() -> Self {
         Self {
             mean: 0.0,
-            std: 0.0,
+            std: 1.0,
         }
     }
 
