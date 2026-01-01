@@ -99,32 +99,3 @@ impl Model for PerceptronModel {
         }
     }
 }
-
-/* impl Model for Perceptron {
-    type Input = Vec<f32>;
-    type Output = f32;
-    fn predict(&self, input: &Self::Input) -> Self::Output {
-        linalg::dot(&self.weights, input) + self.bias
-    }
-
-    fn evaluate(&self, input: &[Self::Input], target: &[Self::Output]) -> f32 {
-        assert_eq!(
-            input.len(),
-            target.len(),
-            "There must be as many inputs as targets."
-        );
-        let mut total = 0.0;
-        for i in 0..input.len() {
-            let result = self.predict(&input[i]);
-            let error = target[i] - result;
-            total += error  / (if target[i] == 0.0 {1.0} else {target[i]});
-        }
-        total / input.len() as f32
-    }
-
-    fn evaluate_one(&self, input: &Self::Input, target: &Self::Output) -> f32 {
-        let result = self.predict(input);
-        (target - result) / (if target == &0.0 {1.0} else {*target})
-    }
-}
- */

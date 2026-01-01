@@ -1,13 +1,14 @@
-use neural_network::nn::{model::Model, perceptron::PerceptronModel};
+use neural_network::data::{self, reader};
+use neural_network::nn::model::Model;
+use neural_network::nn::perceptron::PerceptronModel;
 
 fn main () {
-    //Raw data: lr - 0.012, epochs - 70
-    //Normal data: lr - 1.1 epochs - 20
-    let mut model = PerceptronModel::new(1, 1.0);
-    let (inputs, data) = ([vec![-20.0], vec![-10.0], vec![0.0], vec![10.0], vec![20.0]], [-4.0, 14.0, 32.0, 50.0 ,68.0]);
-    println!("{:?}", inputs);
-    model.fit(&inputs, &data, 15);
-    let result = model.evaluate(&inputs, &data);
+    let data = data::reader::read_csv("data.csv");
+    let (inputs, targets) = (reader::csv_to_matrix(&data, 3), reader::get_column(&data, 3));
+    let mut model = PerceptronModel::new(3, 0.1);
+    model.fit(&inputs, &targets, 50);
+    let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
-    println!("{:?}", model.predict(&vec![30.0]));
+    println!("{:?}", model.predict(&vec![17.0, 17.0, 17.0]));
+    
 }
