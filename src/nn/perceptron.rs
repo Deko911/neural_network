@@ -52,7 +52,7 @@ impl Trainable for Perceptron {
                 self.weights[j] += self.lr * error * input[i][j]
             }
             self.bias += self.lr * error;
-            println!("{:?} {:?}, {:?}", self.weights, self.bias, error);
+            
         }
     }
 }
