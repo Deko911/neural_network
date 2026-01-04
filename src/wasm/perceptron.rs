@@ -1,4 +1,8 @@
-use crate::{nn::{model::Model, perceptron::PerceptronModel}, utils::set_panic_hook};
+use crate::nn::activation::ACTIVATIONS;
+use crate::nn::model::Model;
+use crate::nn::perceptron::PerceptronModel;
+use crate::utils::set_panic_hook;
+use crate::wasm::utils::parse_array_to_matrix;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -7,26 +11,12 @@ pub struct PerceptronJS  {
     input_size: usize
 }
 
-impl PerceptronJS {
-    fn parse_array_to_matrix(&self, input: Vec<f32>) -> Vec<Vec<f32>>{
-        let mut input_parsed: Vec<Vec<f32>> = vec![];
-        for i in 0..input.len() {
-            if i % self.input_size == 0 {
-                input_parsed.push(vec![input[i]]);
-                continue;
-            }
-            input_parsed[i / self.input_size].push(input[i]);
-        }
-        input_parsed
-    }
-}
-
 #[wasm_bindgen]
 impl PerceptronJS {
     #[wasm_bindgen(constructor)]
-    pub fn new(input_size: usize, lr: f32) -> PerceptronJS {
+    pub fn new(input_size: usize, lr: f32, activation: Option<ACTIVATIONS>) -> Self {
         set_panic_hook();
-        let inner = PerceptronModel::new(input_size, lr);
+        let inner = PerceptronModel::new(input_size, lr, activation);
         Self { inner, input_size }
     }
 
@@ -37,7 +27,7 @@ impl PerceptronJS {
 
     #[wasm_bindgen]
     pub fn evaluate(&self, input: Vec<f32>, target: &[f32]) -> f32{
-        let input = self.parse_array_to_matrix(input);
+        let input = parse_array_to_matrix(self.input_size, input);
         self.inner.evaluate(&input, target)
     }
 
@@ -48,13 +38,13 @@ impl PerceptronJS {
 
     #[wasm_bindgen]
     pub fn fit(&mut self, input: Vec<f32>, target: &[f32], epochs: usize){
-        let input = self.parse_array_to_matrix(input);
+        let input = parse_array_to_matrix(self.input_size, input);
         self.inner.fit(&input, target, epochs);
     }
 
     #[wasm_bindgen]
     pub fn fit_raw(&mut self, input: Vec<f32>, target: &[f32], epochs: usize){
-        let input = self.parse_array_to_matrix(input);
+        let input = parse_array_to_matrix(self.input_size, input);
         self.inner.fit_raw(&input, target, epochs);
     }
 }

@@ -5,7 +5,7 @@ use neural_network::nn::perceptron::PerceptronModel;
 fn main () {
     let data = data::reader::read_csv("data.csv");
     let (inputs, targets) = (reader::csv_to_matrix(&data, 3), reader::get_column(&data, 3));
-    let mut model = PerceptronModel::new(3, 0.2);
+    let mut model = PerceptronModel::new(3, 0.2, None);
     model.fit(&inputs, &targets, 10);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
@@ -19,7 +19,7 @@ fn alternative () {
     let [inputs, targets] = [data["inputs"].take(), data["targets"].take()];
     let targets: Vec<f32> = reader::json_to_array(&targets).unwrap();
     let inputs = reader::json_to_matrix(&inputs).unwrap();
-    let mut model = PerceptronModel::new(3, 0.2);
+    let mut model = PerceptronModel::new(3, 0.2, None);
     model.fit(&inputs, &targets, 10);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);

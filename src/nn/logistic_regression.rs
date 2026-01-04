@@ -1,72 +1,48 @@
 use super::model::{Model, Trainable};
-use crate::core::linalg;
+use super::perceptron::Perceptron;
 use crate::data::scaler::StandardScale;
-use crate::nn::activation::{self, ACTIVATIONS};
+use crate::nn::activation::ACTIVATIONS;
 
-pub struct Perceptron {
-    weights: Vec<f32>,
-    bias: f32,
-    lr: f32,
-    activation: fn(f32) -> f32
-}
-
-pub struct PerceptronModel {
+pub struct LogisticRegression {
     network: Perceptron,
     scaler: StandardScale,
+    threshold: f32,
 }
 
-impl Perceptron {
-    pub fn new(input_size: usize, lr: f32, activation: ACTIVATIONS) -> Self {
-        let activation = activation::get_function(activation);
-        Self {
-            weights: vec![0.0; input_size],
-            bias: 0.0,
-            lr,
-            activation
-        }
-    }
-}
-
-impl PerceptronModel {
-    pub fn new(input_size: usize, lr: f32, activation: Option<ACTIVATIONS>) -> Self {
-        let activation = activation.unwrap_or_default();
+impl LogisticRegression {
+    pub fn new(input_size: usize, lr: f32, threshold: Option<f32>) -> Self {
+        let threshold = threshold.unwrap_or_else(|| 0.5);
+        let activation = ACTIVATIONS::SIGMOID;
         Self {
             network: Perceptron::new(input_size, lr, activation),
             scaler: StandardScale::new(),
+            threshold,
         }
     }
-}
 
-impl Trainable for Perceptron {
-    type Input = Vec<f32>;
-    type Output = f32;
-
-    fn predict(&self, input: &Self::Input) -> Self::Output {
-        let z = linalg::dot(&self.weights, input) + self.bias;
-        (self.activation)(z)
+    pub fn choice_bool(&self, input: &Vec<f32>) -> bool {
+        let option = self.predict(input);
+        option > self.threshold
     }
 
-    fn error(&self, input: &Self::Input, target: &Self::Output) -> f32 {
+    pub fn choice<T: Clone>(&self, input: &Vec<f32>, options: &[T; 2]) -> T {
+        if self.choice_bool(input) {
+            options[1].clone()
+        } else {
+            options[0].clone()
+        }
+    }
+
+    pub fn predict_prob(&self, input: &Vec<f32>) -> [f32; 2] {
         let result = self.predict(input);
-        target - result
-    }
-
-    fn train_step(&mut self, input: &[Self::Input], target: &[Self::Output]) {
-        for i in 0..input.len() {
-            let error = self.error(&input[i], &target[i]);
-            for j in 0..self.weights.len() {
-                self.weights[j] += self.lr * error * input[i][j]
-            }
-            self.bias += self.lr * error;
-            
-        }
+        [1.0 - result, result]
     }
 }
 
-impl Model for PerceptronModel {
+impl Model for LogisticRegression {
     type Input = Vec<f32>;
     type Output = f32;
-    
+
     fn predict(&self, input: &Self::Input) -> Self::Output {
         let input = self.scaler.transform(input);
         self.network.predict(&input)
@@ -80,16 +56,17 @@ impl Model for PerceptronModel {
         );
         let mut total = 0.0;
         for i in 0..input.len() {
-            let result = self.predict(&input[i]);
-            let error = target[i] - result;
+            let result = self.choice(&input[i], &[0.0, 1.0]);
+            let error = (target[i] - result).abs();
+            println!("{}, {}", target[i], result);
             total += error / (if target[i] == 0.0 { 1.0 } else { target[i] });
         }
         total / input.len() as f32
     }
 
     fn evaluate_one(&self, input: &Self::Input, target: &Self::Output) -> f32 {
-        let result = self.predict(input);
-        (target - result) / (if target == &0.0 { 1.0 } else { *target })
+        let result = self.choice(&input, &[0.0, 1.0]);
+        (target - result).abs() / (if target == &0.0 { 1.0 } else { *target })
     }
 
     fn fit_raw(&mut self, input: &[Self::Input], target: &[Self::Output], epochs: usize) {

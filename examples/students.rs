@@ -20,5 +20,5 @@ fn main () {
     println!("{:?}", result);
     let student = vec![5.0, 75.0, 68.0];
     println!("{:?}", model.predict_prob(&student));
-    println!("{}", model.choice(&student, &["disaprove", "aprove"]));
+    println!("{}", model.choice(&student, &["disapprove", "approve"]));
 }
