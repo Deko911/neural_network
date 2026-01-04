@@ -25,6 +25,15 @@ pub fn json_to_array(data: &Value) -> Option<Vec<f32>> {
     Some(result)
 }
 
+pub fn json_to_array_string(data: &Value) -> Option<Vec<String>> {
+    let data = data.as_array();
+    if let None = data {
+        return None;
+    }
+    let result: Vec<String> = data.unwrap().iter().map(|x| x.as_str().unwrap_or("").trim().to_string()).collect();
+    Some(result)
+}
+
 pub fn json_to_matrix(data: &Value) -> Option<Vec<Vec<f32>>> {
     let data = data.as_array();
     if let None = data {
@@ -46,6 +55,10 @@ pub fn get_column(data: &Vec<Vec<String>>, idx: usize) -> Vec<f32> {
     data.iter().map(|r| r[idx].trim().parse::<f32>().unwrap_or(f32::NAN)).collect()
 }
 
+pub fn get_column_string(data: &Vec<Vec<String>>, idx: usize) -> Vec<String> {
+    data.iter().map(|r| r[idx].trim().to_string()).collect()
+}
+
 pub fn csv_to_matrix(data: &Vec<Vec<String>>, size: usize) -> Vec<Vec<f32>> {
     let mut result: Vec<Vec<f32>> = vec![];
     for r in 0..data.len() {
@@ -57,3 +70,14 @@ pub fn csv_to_matrix(data: &Vec<Vec<String>>, size: usize) -> Vec<Vec<f32>> {
     result
 }
 
+pub fn array_string_to_range_options(data: &Vec<String>, options: &[String]) -> Vec<f32> {
+    let op = options.len();
+    data.iter().map(|x| {
+        for i in 0..op {
+            if x == &options[i] {
+                return i as f32;
+            }            
+        }
+        f32::NAN
+    }).collect()
+}
