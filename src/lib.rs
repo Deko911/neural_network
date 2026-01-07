@@ -1,6 +1,6 @@
 mod utils;
 
-mod core;
+pub mod core;
 pub mod nn;
 pub mod data;
 pub mod wasm;

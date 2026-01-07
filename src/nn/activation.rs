@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use crate::core::tensor::Tensor;
+
 #[wasm_bindgen]
 pub enum ACTIVATIONS {
     DEFAULT,
@@ -12,7 +14,7 @@ impl Default for ACTIVATIONS {
     }
 }
 
-pub fn get_function(activation: ACTIVATIONS) -> fn(f32) -> f32 {
+pub fn get_function(activation: ACTIVATIONS) -> fn(Tensor) -> Tensor {
     use ACTIVATIONS::*;
     match activation {
         DEFAULT => default,
@@ -20,10 +22,10 @@ pub fn get_function(activation: ACTIVATIONS) -> fn(f32) -> f32 {
     }
 }
 
-pub fn default(x: f32) -> f32 {
+pub fn default(x: Tensor) -> Tensor {
     x
 }
 
-pub fn sigmoid(x: f32) -> f32 {
-    1.0 / (1.0 + (-x).exp())
+pub fn sigmoid(mut x: Tensor) -> Tensor {
+    x.map(|el| 1.0 / (1.0 + (-el).exp()))
 }
