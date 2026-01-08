@@ -1,25 +1,25 @@
 use super::model::{Model, Trainable};
-use crate::core::linalg;
-use crate::data::scaler::StandardScale;
+use crate::core::tensor::Tensor;
+use crate::data::scaler::StandardScaler;
 use crate::nn::activation::{self, ACTIVATIONS};
 
 pub struct Perceptron {
-    weights: Vec<f32>,
+    weights: Tensor,
     bias: f32,
     lr: f32,
-    activation: fn(f32) -> f32
+    activation: fn(Tensor) -> Tensor
 }
 
 pub struct PerceptronModel {
     network: Perceptron,
-    scaler: StandardScale,
+    scaler: StandardScaler,
 }
 
 impl Perceptron {
     pub fn new(input_size: usize, lr: f32, activation: ACTIVATIONS) -> Self {
         let activation = activation::get_function(activation);
         Self {
-            weights: vec![0.0; input_size],
+            weights: Tensor::zeros((input_size, 1)),
             bias: 0.0,
             lr,
             activation
@@ -32,47 +32,42 @@ impl PerceptronModel {
         let activation = activation.unwrap_or_default();
         Self {
             network: Perceptron::new(input_size, lr, activation),
-            scaler: StandardScale::new(),
+            scaler: StandardScaler::new(),
         }
     }
 }
 
 impl Trainable for Perceptron {
-    type Input = Vec<f32>;
-    type Output = f32;
 
-    fn predict(&self, input: &Self::Input) -> Self::Output {
-        let z = linalg::dot(&self.weights, input) + self.bias;
+    fn predict(&self, input: &Tensor) -> Tensor {
+        let z = input.dot(&self.weights) + self.bias;
         (self.activation)(z)
     }
-
-    fn error(&self, input: &Self::Input, target: &Self::Output) -> f32 {
+    
+    fn error(&self, input: &Tensor, target: &Tensor) -> Tensor {
         let result = self.predict(input);
-        target - result
+        target - &result
     }
-
-    fn train_step(&mut self, input: &[Self::Input], target: &[Self::Output]) {
+    
+    fn train_step(&mut self, input: &Tensor, target: &Tensor) {
         for i in 0..input.len() {
-            let error = self.error(&input[i], &target[i]);
-            for j in 0..self.weights.len() {
-                self.weights[j] += self.lr * error * input[i][j]
-            }
-            self.bias += self.lr * error;
-            
+            let input_slice = input.row(i);
+            let target_slice = target.row(i);
+            let error = self.error(&input_slice, &target_slice);
+            self.weights += &input_slice.t() * &error * self.lr;
+            self.bias += error.as_f32() * self.lr;
         }
     }
 }
 
 impl Model for PerceptronModel {
-    type Input = Vec<f32>;
-    type Output = f32;
     
-    fn predict(&self, input: &Self::Input) -> Self::Output {
+    fn predict(&self, input: &Tensor) -> Tensor {
         let input = self.scaler.transform(input);
         self.network.predict(&input)
     }
-
-    fn evaluate(&self, input: &[Self::Input], target: &[Self::Output]) -> f32 {
+    
+    fn evaluate(&self, input: &Tensor, target: &Tensor) -> f32 {
         assert_eq!(
             input.len(),
             target.len(),
@@ -80,19 +75,23 @@ impl Model for PerceptronModel {
         );
         let mut total = 0.0;
         for i in 0..input.len() {
-            let result = self.predict(&input[i]);
-            let error = target[i] - result;
-            total += error / (if target[i] == 0.0 { 1.0 } else { target[i] });
+            let input_slice = input.row(i);
+            let target_slice = target.row(i);
+            let targetf32 = target_slice.as_f32();
+            let result = self.predict(&input_slice).as_f32();
+            let error = targetf32 - result;
+            total += error / (if targetf32 == 0.0 { 1.0 } else { targetf32 });
         }
         total / input.len() as f32
     }
-
-    fn evaluate_one(&self, input: &Self::Input, target: &Self::Output) -> f32 {
-        let result = self.predict(input);
-        (target - result) / (if target == &0.0 { 1.0 } else { *target })
+    
+    fn evaluate_one(&self, input: &Tensor, target: &Tensor) -> f32 {
+        let target = target.as_f32();
+        let result = self.predict(input).as_f32();
+        (target - result) / (if target == 0.0 { 1.0 } else { target })
     }
-
-    fn fit_raw(&mut self, input: &[Self::Input], target: &[Self::Output], epochs: usize) {
+    
+    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
         assert_eq!(
             input.len(),
             target.len(),
@@ -102,15 +101,15 @@ impl Model for PerceptronModel {
             self.network.train_step(&input, target);
         }
     }
-
-    fn fit(&mut self, input: &[Self::Input], target: &[Self::Output], epochs: usize) {
+    
+    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
         assert_eq!(
             input.len(),
             target.len(),
             "There must be as many inputs as targets."
         );
         self.scaler.fit(input);
-        let input = self.scaler.transform_batch(input);
+        let input = self.scaler.transform(input);
         for _ in 0..epochs {
             self.network.train_step(&input, target);
         }

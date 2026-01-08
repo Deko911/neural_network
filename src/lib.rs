@@ -3,7 +3,7 @@ mod utils;
 pub mod core;
 pub mod nn;
 pub mod data;
-pub mod wasm;
+//pub mod wasm;
 
 use wasm_bindgen::prelude::*;
 
