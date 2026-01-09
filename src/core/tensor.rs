@@ -20,6 +20,10 @@ impl Tensor {
         Tensor::from_shape_vec((1, vec.len()), vec)
     }
 
+    pub fn from_vec_col(vec: Vec<f32>) -> Self {
+        Tensor::from_shape_vec((vec.len(), 1), vec)
+    }
+
     pub fn from_matrix(mat: &Vec<Vec<f32>>) -> Self{
         let rows = mat.len();
         let cols = mat.get(0).unwrap_or(&vec![]).len();
@@ -36,6 +40,14 @@ impl Tensor {
     pub fn zeros(shape: (usize, usize)) -> Self {
         let data = ndarray::Array::zeros(shape).into_dyn();
         Self { data }
+    }
+
+    pub fn as_slice(&self) -> Option<&[f32]> {
+        self.data.as_slice()
+    }
+
+    pub fn to_vec(&self) -> Vec<f32> {
+        self.iter().map(|x| *x).collect()
     }
 
     pub fn as_f32(&self) -> f32 {
