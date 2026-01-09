@@ -1,6 +1,6 @@
 use neural_network::core::tensor::Tensor;
 use neural_network::nn::logistic_regression::LogisticRegression;
-use neural_network::nn::model::Model;
+use neural_network::nn::model::{Metrics, Model};
 
 
 fn main() {

@@ -1,6 +1,6 @@
 use neural_network::core::tensor::Tensor;
 use neural_network::nn::logistic_regression::LogisticRegression;
-use neural_network::nn::model::Model;
+use neural_network::nn::model::{Metrics, Model};
 
 
 fn main() {
@@ -18,8 +18,10 @@ fn main() {
     );
     let targets = Tensor::from_shape_vec((8, 1), vec![0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]);
     let mut model = LogisticRegression::new(3, 0.2, None);
-    model.fit(&inputs, &targets, 10);
+    model.fit(&inputs, &targets, 15);
     let result = model.evaluate(&inputs, &targets);
+    println!("evaluation: {:?}", result);
+    let result = model.accurate(&inputs, &targets);
     println!("{:?}", result);
     let student = Tensor::from_vec(vec![5.0, 75.0, 68.0]);
     println!("{:?}", model.predict_prob(&student));

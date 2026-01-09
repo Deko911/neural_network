@@ -1,6 +1,6 @@
 use neural_network::core::tensor::Tensor;
 use neural_network::data::{self, reader};
-use neural_network::nn::model::Model;
+use neural_network::nn::model::{Metrics, Model};
 use neural_network::nn::perceptron::PerceptronModel;
 
 

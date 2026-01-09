@@ -1,5 +1,5 @@
 use crate::core::tensor::Tensor;
-use crate::nn::model::Model;
+use crate::nn::model::{Metrics, Model};
 use crate::nn::logistic_regression::LogisticRegression;
 use crate::utils::set_panic_hook;
 use crate::wasm::utils::parse_array_to_tensor;
@@ -34,10 +34,10 @@ impl LogisticRegressionJS {
     }
 
     #[wasm_bindgen]
-    pub fn evaluate_one(&self, input: Vec<f32>, target: f32) -> f32{
-        let input = Tensor::from_vec(input);
-        let target = &Tensor::from_elem(target);
-        self.inner.evaluate_one(&input, &target)
+    pub fn evaluate_one(&self, input: Vec<f32>, target: &[f32]) -> f32{
+        let input = parse_array_to_tensor(self.input_size, input);
+        let target = &Tensor::from_vec_col(target.to_vec());
+        self.inner.accurate(&input, &target)
     }
 
     #[wasm_bindgen]

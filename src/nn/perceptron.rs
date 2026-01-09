@@ -2,6 +2,7 @@ use super::model::{Model, Trainable};
 use crate::core::tensor::Tensor;
 use crate::data::scaler::StandardScaler;
 use crate::nn::activation::{self, ACTIVATIONS};
+use crate::nn::model::Metrics;
 
 pub struct Perceptron {
     weights: Tensor,
@@ -67,30 +68,6 @@ impl Model for PerceptronModel {
         self.network.predict(&input)
     }
     
-    fn evaluate(&self, input: &Tensor, target: &Tensor) -> f32 {
-        assert_eq!(
-            input.len(),
-            target.len(),
-            "There must be as many inputs as targets."
-        );
-        let mut total = 0.0;
-        for i in 0..input.len() {
-            let input_slice = input.row(i);
-            let target_slice = target.row(i);
-            let targetf32 = target_slice.as_f32();
-            let result = self.predict(&input_slice).as_f32();
-            let error = targetf32 - result;
-            total += error / (if targetf32 == 0.0 { 1.0 } else { targetf32 });
-        }
-        total / input.len() as f32
-    }
-    
-    fn evaluate_one(&self, input: &Tensor, target: &Tensor) -> f32 {
-        let target = target.as_f32();
-        let result = self.predict(input).as_f32();
-        (target - result) / (if target == 0.0 { 1.0 } else { target })
-    }
-    
     fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
         assert_eq!(
             input.len(),
@@ -113,5 +90,43 @@ impl Model for PerceptronModel {
         for _ in 0..epochs {
             self.network.train_step(&input, target);
         }
+    }
+}
+
+impl Metrics for PerceptronModel {
+    fn evaluate(&self, input: &Tensor, target: &Tensor) -> f32 {
+        assert_eq!(
+            input.len(),
+            target.len(),
+            "There must be as many inputs as targets."
+        );
+        let mut total = 0.0;
+        for i in 0..input.len() {
+            let input_slice = input.row(i);
+            let target_slice = target.row(i);
+            let targetf32 = target_slice.as_f32();
+            let result = self.predict(&input_slice).as_f32();
+            let error = targetf32 - result;
+            total += error.powi(2);
+        }
+        1.0 / (total / input.len() as f32 + 1.0).sqrt()
+    }
+
+    fn accurate(&self, input: &Tensor, target: &Tensor) -> f32 {
+        assert_eq!(
+            input.len(),
+            target.len(),
+            "There must be as many inputs as targets."
+        );
+        let mut total = 0.0;
+        for i in 0..input.len() {
+            let input_slice = input.row(i);
+            let target_slice = target.row(i);
+            let targetf32 = target_slice.as_f32();
+            let result = self.predict(&input_slice).as_f32();
+            let error = (targetf32 - result).abs();
+            total += error / (if targetf32 == 0.0 { 1.0 } else { targetf32 });
+        }
+        1.0 - total / input.len() as f32
     }
 }
