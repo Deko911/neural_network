@@ -19,7 +19,7 @@ function predictFont() {
     let g = parseInt(color[2] + color[3], 16)
     let b = parseInt(color[4] + color[5], 16)
 
-    let font = model.predict(new Float32Array([r, g, b]))
+    let font = model.predict(new Float32Array([r, g, b]))[0]
 
     if (font > 0.5) {
         text.style.color = "#fff"

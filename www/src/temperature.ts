@@ -18,7 +18,7 @@ function predictTemperature() {
     }
     previous = celsius;
 
-    let farenheit = model.predict(new Float32Array([Number(celsius)]));
+    let farenheit = model.predict(new Float32Array([Number(celsius)]))[0];
     document.getElementById("celsius")!.innerText = "celsius:" + celsius + "°";
     document.getElementById("farenheit")!.innerText = "farenheit: " + String(Math.trunc(farenheit * 100) / 100) + "°";
 }
