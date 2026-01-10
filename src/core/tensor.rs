@@ -5,6 +5,8 @@ use ndarray::linalg::Dot;
 use ndarray::{Dim, IxDynImpl};
 use ndarray::iter::{Iter, IterMut};
 
+use rand::Rng;
+
 #[derive(Clone)]
 pub struct Tensor {
     pub data: ndarray::ArrayD<f32>
@@ -40,6 +42,13 @@ impl Tensor {
     pub fn zeros(shape: (usize, usize)) -> Self {
         let data = ndarray::Array::zeros(shape).into_dyn();
         Self { data }
+    }
+
+    pub fn random(shape: (usize, usize)) -> Self {
+        let mut vec = vec![0.0f32; shape.0 * shape.1];
+        rand::fill(&mut vec[..]);
+        let t = Self::from_shape_vec(shape, vec);
+        t * 2.0 - 1.0 
     }
 
     pub fn as_slice(&self) -> Option<&[f32]> {

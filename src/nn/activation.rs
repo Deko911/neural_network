@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 use crate::core::tensor::Tensor;
 
 #[wasm_bindgen]
+#[derive(Debug, Clone, Copy)]
 pub enum ACTIVATIONS {
     DEFAULT,
     SIGMOID,
