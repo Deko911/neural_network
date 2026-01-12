@@ -13,17 +13,25 @@ pub struct Layer {
 }
 
 impl Layer {
+    ///
+    /// (inputs, neurons)
     pub fn new(shape: (usize, usize), activation: ACTIVATIONS) -> Self {
         let weights = Tensor::random(shape);
-        let bias = Tensor::zeros((shape.0, 1));
+        let bias = Tensor::zeros((1, shape.1));
         let activation_name = activation;
         let activation = activation::get_function(activation);
         Self { weights, bias, activation, activation_name }
     }
 
     pub fn forward(&self, input: &Tensor) -> Tensor {
-        let x = &(input * &self.weights) + &self.bias;
+        let x = &input.dot(&self.weights) + &self.bias;
         (self.activation)(x)
+    }
+
+    pub fn compatible(&self, rhs: &Tensor) -> bool {
+        let (rows1, cols1) = self.weights.shape_tuple();
+        let (rows2, cols2) = rhs.shape_tuple();
+        rows1 == cols2 && cols1 == rows2
     }
 }
 

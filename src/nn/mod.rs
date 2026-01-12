@@ -4,3 +4,4 @@ pub mod activation;
 pub mod perceptron;
 pub mod logistic_regression;
 pub mod layer;
+pub mod neural_network;

@@ -27,6 +27,6 @@ pub fn default(x: Tensor) -> Tensor {
     x
 }
 
-pub fn sigmoid(mut x: Tensor) -> Tensor {
+pub fn sigmoid(x: Tensor) -> Tensor {
     x.map(|el| 1.0 / (1.0 + (-el).exp()))
 }
