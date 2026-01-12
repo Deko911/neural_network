@@ -9,7 +9,8 @@ pub trait Model {
 
 pub trait Trainable {
     fn predict(&self, input: &Tensor) -> Tensor;
-    fn error(&self, input: &Tensor, target: &Tensor) -> Tensor;
+    fn cost(&self, input: &Tensor, target: &Tensor) -> f32;
+    fn gradient(&self, input: &Tensor, target: &Tensor) -> Tensor;
     fn train_step(&mut self, input: &Tensor, target: &Tensor);
 }
 

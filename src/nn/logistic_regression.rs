@@ -3,7 +3,7 @@ use super::perceptron::Perceptron;
 use crate::core::tensor::Tensor;
 use crate::data::scaler::StandardScaler;
 use crate::nn::activation::ACTIVATIONS;
-use crate::nn::loss;
+use crate::nn::loss::LOSS;
 use crate::nn::model::Metrics;
 
 pub struct LogisticRegression {
@@ -16,8 +16,9 @@ impl LogisticRegression {
     pub fn new(input_size: usize, lr: f32, threshold: Option<f32>) -> Self {
         let threshold = threshold.unwrap_or_else(|| 0.5);
         let activation = ACTIVATIONS::SIGMOID;
+        let loss = LOSS::BINARY_CROSS_ENTROPY;
         Self {
-            network: Perceptron::new(input_size, lr, activation),
+            network: Perceptron::new(input_size, lr, activation, loss),
             scaler: StandardScaler::new(),
             threshold,
         }
@@ -81,13 +82,12 @@ impl Metrics for LogisticRegression {
             target.len(),
             "There must be as many inputs as targets."
         );
+        let input = self.scaler.transform(input);
         let mut total = 0.0;
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
-            let targetf32 = target_slice.as_f32();
-            let result = self.predict(&input_slice).as_f32();
-            let error = 1.0 - loss::binary_cross_entropy(result, targetf32);
+            let error = 1.0 / (self.network.cost(&input_slice, &target_slice) + 1.0);
             total += error;
         }
         total / input.len() as f32

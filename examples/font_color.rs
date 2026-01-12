@@ -9,7 +9,7 @@ fn main() {
     let (inputs, targets) = (reader::csv_to_matrix(&data, 3), reader::get_column(&data, 3));
     let inputs = Tensor::from_matrix(&inputs);
     let targets = Tensor::from_shape_vec((targets.len(), 1), targets);
-    let mut model = PerceptronModel::new(3, 0.2, None);
+    let mut model = PerceptronModel::new(3, 0.2, None, None);
     model.fit(&inputs, &targets, 10);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
@@ -25,7 +25,7 @@ fn alternative () {
     let inputs = reader::json_to_matrix(&inputs).unwrap();
     let inputs = Tensor::from_matrix(&inputs);
     let targets = Tensor::from_shape_vec((targets.len(), 1), targets);
-    let mut model = PerceptronModel::new(3, 0.2, None);
+    let mut model = PerceptronModel::new(3, 0.2, None, None);
     model.fit(&inputs, &targets, 10);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);

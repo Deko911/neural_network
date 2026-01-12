@@ -1,5 +1,6 @@
 use crate::core::tensor::Tensor;
 use crate::nn::activation::ACTIVATIONS;
+use crate::nn::loss::LOSS;
 use crate::nn::model::{Metrics, Model};
 use crate::nn::perceptron::PerceptronModel;
 use crate::utils::set_panic_hook;
@@ -15,9 +16,9 @@ pub struct PerceptronJS {
 #[wasm_bindgen]
 impl PerceptronJS {
     #[wasm_bindgen(constructor)]
-    pub fn new(input_size: usize, lr: f32, activation: Option<ACTIVATIONS>) -> Self {
+    pub fn new(input_size: usize, lr: f32, activation: Option<ACTIVATIONS>, loss: Option<LOSS>) -> Self {
         set_panic_hook();
-        let inner = PerceptronModel::new(input_size, lr, activation);
+        let inner = PerceptronModel::new(input_size, lr, activation, loss);
         Self { inner, input_size }
     }
 

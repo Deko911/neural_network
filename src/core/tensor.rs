@@ -5,8 +5,6 @@ use ndarray::linalg::Dot;
 use ndarray::{Dim, IxDynImpl};
 use ndarray::iter::{Iter, IterMut};
 
-use rand::Rng;
-
 #[derive(Clone)]
 pub struct Tensor {
     pub data: ndarray::ArrayD<f32>
@@ -109,7 +107,7 @@ impl Tensor {
         self.data.for_each(f);
     }
 
-    pub fn map<F: FnMut(&f32) -> f32>(&mut self, f: F) -> Self {
+    pub fn map<F: FnMut(&f32) -> f32>(&self, f: F) -> Self {
         let data = self.data.map(f).into_dyn();
         Self { data }
     }

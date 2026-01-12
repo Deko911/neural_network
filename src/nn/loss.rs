@@ -1,6 +1,58 @@
+use wasm_bindgen::prelude::*;
+
+use crate::core::tensor::Tensor;
+
 const EPS: f32 = 1e-7;
 
-pub fn binary_cross_entropy(prediction: f32, target: f32) -> f32 {
+#[wasm_bindgen]
+#[allow(non_camel_case_types)]
+pub enum LOSS {
+    DEFAULT,
+    BINARY_CROSS_ENTROPY,
+    QUAD
+}
+
+impl Default for LOSS {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
+pub fn get_function(loss: LOSS) -> fn(&Tensor, &Tensor) -> f32 {
+    use LOSS::*;
+    match loss {
+        DEFAULT => default,
+        BINARY_CROSS_ENTROPY => binary_cross_entropy,
+        QUAD => quad
+    }
+}
+
+fn default(prediction: &Tensor, target: &Tensor) -> f32 {
+    let target_slice = target.as_slice().unwrap();
+    let mut count = 0;
+    let loss: f32 = prediction.iter().map(|x| {
+        let result = target_slice[count] - x;
+        count += 1;
+        result.abs()
+    }).sum();
+    loss / target.len() as f32
+}
+
+fn quad(prediction: &Tensor, target: &Tensor) -> f32 {
+    let target_slice = target.as_slice().unwrap();
+    let mut count = 0;
+    let loss: f32 = prediction.iter().map(|x| {
+        let result = target_slice[count] - x;
+        count += 1;
+        result.powi(2)
+    }).sum();
+    loss / target.len() as f32
+}
+
+fn binary_cross_entropy(prediction: &Tensor, target: &Tensor) -> f32 {
+    let prediction = prediction.as_f32();
+    let target = target.as_f32();
     let prediction = prediction.clamp(EPS, 1.0 - EPS);
-    -(target * prediction.ln() + (1.0 - target) *  (1.0 - prediction).ln())
+    let result = target * prediction.ln() + (1.0 - target) *  (1.0 - prediction).ln();
+    -result
 }
