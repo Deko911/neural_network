@@ -6,32 +6,34 @@ use crate::core::tensor::Tensor;
 use super::activation::{self, ACTIVATIONS};
 
 pub struct Layer {
-    weights: Tensor,
-    bias: Tensor,
-    activation: fn(Tensor) -> Tensor,
-    activation_name: ACTIVATIONS
+    pub weights: Tensor,
+    pub bias: Tensor,
+    activation: fn(&Tensor) -> Tensor,
+    pub activation_name: ACTIVATIONS
 }
 
 impl Layer {
     ///
     /// (inputs, neurons)
     pub fn new(shape: (usize, usize), activation: ACTIVATIONS) -> Self {
-        let weights = Tensor::random(shape);
+        let weights = Tensor::xavier_init(shape.0, shape.1);
         let bias = Tensor::zeros((1, shape.1));
         let activation_name = activation;
         let activation = activation::get_function(activation);
         Self { weights, bias, activation, activation_name }
     }
 
-    pub fn forward(&self, input: &Tensor) -> Tensor {
+    //(z, activation)
+    pub fn forward(&self, input: &Tensor) -> (Tensor, Tensor) {
         let x = &input.dot(&self.weights) + &self.bias;
-        (self.activation)(x)
+        let activation = (self.activation)(&x);
+        (x, activation)
     }
 
     pub fn compatible(&self, rhs: &Tensor) -> bool {
-        let (rows1, cols1) = self.weights.shape_tuple();
+        let (rows1, _) = self.weights.shape_tuple();
         let (rows2, cols2) = rhs.shape_tuple();
-        rows1 == cols2 && cols1 == rows2
+        rows1 == cols2 && rows2 == 1
     }
 }
 

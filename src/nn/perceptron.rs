@@ -9,7 +9,7 @@ pub struct Perceptron {
     weights: Tensor,
     bias: f32,
     lr: f32,
-    activation: fn(Tensor) -> Tensor,
+    activation: fn(&Tensor) -> Tensor,
     loss: fn(&Tensor, &Tensor) -> f32
 }
 
@@ -47,17 +47,14 @@ impl Trainable for Perceptron {
 
     fn predict(&self, input: &Tensor) -> Tensor {
         let z = input.dot(&self.weights) + self.bias;
-        (self.activation)(z)
+        (self.activation)(&z)
     }
     
-    fn cost(&self, input: &Tensor, target: &Tensor) -> f32 {
-        let result = self.predict(input);
+    fn cost(&self, result: &Tensor, target: &Tensor) -> f32 {
         (self.loss)(&result, target)
     }
 
-    fn gradient(&self, input: &Tensor, target: &Tensor) -> Tensor {
-        let result = self.predict(input);
-        let cost = (self.loss)(&result, target);
+    fn gradient(&self, cost: f32, result: &Tensor, target: &Tensor) -> Tensor {
         let target_slice = target.as_slice().unwrap();
         let mut idx = 0;
         result.map(|x| {
@@ -71,7 +68,9 @@ impl Trainable for Perceptron {
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
-            let error = self.gradient(&input_slice, &target_slice);
+            let result = self.predict(&input_slice);
+            let cost = self.cost(&result, &target_slice);
+            let error = self.gradient(cost, &result, &target_slice);
             self.weights += &input_slice.t() * &error * self.lr;
             self.bias += error.as_f32() * self.lr;
         }
@@ -117,12 +116,12 @@ impl Metrics for PerceptronModel {
             target.len(),
             "There must be as many inputs as targets."
         );
-        let input = self.scaler.transform(input);
         let mut total = 0.0;
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
-            let error = 1.0 / (self.network.cost(&input_slice, &target_slice) + 1.0);
+            let result = self.predict(&input_slice);
+            let error = 1.0 / (self.network.cost(&result, &target_slice) + 1.0);
             total += error;
         }
         total / input.len() as f32

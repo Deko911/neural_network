@@ -15,7 +15,7 @@ impl Default for ACTIVATIONS {
     }
 }
 
-pub fn get_function(activation: ACTIVATIONS) -> fn(Tensor) -> Tensor {
+pub fn get_function(activation: ACTIVATIONS) -> fn(&Tensor) -> Tensor {
     use ACTIVATIONS::*;
     match activation {
         DEFAULT => default,
@@ -23,10 +23,27 @@ pub fn get_function(activation: ACTIVATIONS) -> fn(Tensor) -> Tensor {
     }
 }
 
-pub fn default(x: Tensor) -> Tensor {
-    x
+pub fn get_prime(activation: ACTIVATIONS) -> fn(&Tensor) -> Tensor {
+    use ACTIVATIONS::*;
+    match activation {
+        DEFAULT => default_prime,
+        SIGMOID => sigmoid_prime
+    }
 }
 
-pub fn sigmoid(x: Tensor) -> Tensor {
+fn default(x: &Tensor) -> Tensor {
+    x.clone()
+}
+
+fn sigmoid(x: &Tensor) -> Tensor {
     x.map(|el| 1.0 / (1.0 + (-el).exp()))
+}
+
+fn default_prime (_: &Tensor) -> Tensor {
+    Tensor::from_elem(1.0)
+}
+
+fn sigmoid_prime(z: &Tensor) -> Tensor {
+    let sig = sigmoid(z);
+    sig.map(|el| el * (1.0 - el))
 }

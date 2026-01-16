@@ -4,6 +4,7 @@ use std::fmt::{Display, Debug};
 use ndarray::linalg::Dot;
 use ndarray::{Dim, IxDynImpl};
 use ndarray::iter::{Iter, IterMut};
+use rand::Rng;
 
 #[derive(Clone)]
 pub struct Tensor {
@@ -47,6 +48,15 @@ impl Tensor {
         rand::fill(&mut vec[..]);
         let t = Self::from_shape_vec(shape, vec);
         t * 2.0 - 1.0 
+    }
+
+    pub fn xavier_init(fan_in: usize, fan_out: usize) -> Self {
+        let limit = (6.0f32 / (fan_in as f32 + fan_out as f32)).sqrt();
+        let mut rng = rand::rng();
+        let data = ndarray::Array2::from_shape_fn((fan_in, fan_out), |_| {
+            rng.random_range(-limit..limit)
+        }).into_dyn();
+        Tensor { data }
     }
 
     pub fn as_slice(&self) -> Option<&[f32]> {

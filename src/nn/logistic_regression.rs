@@ -82,12 +82,12 @@ impl Metrics for LogisticRegression {
             target.len(),
             "There must be as many inputs as targets."
         );
-        let input = self.scaler.transform(input);
         let mut total = 0.0;
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
-            let error = 1.0 / (self.network.cost(&input_slice, &target_slice) + 1.0);
+            let result = self.predict(&input_slice);
+            let error = self.network.cost(&result, &target_slice);
             total += error;
         }
         total / input.len() as f32
