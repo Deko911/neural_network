@@ -65,6 +65,16 @@ pub struct NeuralNetworkModel {
     scaler: StandardScaler
 }
 
+impl NeuralNetworkModel {
+    pub fn new(layers: Vec<Layer>, lr: f32, loss: Option<LOSS>) -> Self{
+        let loss = loss.unwrap_or_default();
+        Self {
+            network: NeuralNetwork::new(layers, lr, loss),
+            scaler: StandardScaler::new(),
+        }
+    }
+}
+
 impl Trainable for NeuralNetwork {
     fn predict(&self, input: &Tensor) -> Tensor {
         assert!(self.layers[0].compatible(input), "The input shape is not compatible");
@@ -89,7 +99,7 @@ impl Trainable for NeuralNetwork {
         })
     }
 
-    fn train_step(&mut self, input: &Tensor, target: &Tensor) {
+    fn train_step(&mut self, input: &Tensor, target: &Tensor) -> f32 {
         let mut cost = 0.0;
         let n = input.len();
         // Acumular gradientes para batch
@@ -119,7 +129,8 @@ impl Trainable for NeuralNetwork {
             self.layers[l].weights = &self.layers[l].weights - &avg_dw;
             self.layers[l].bias = &self.layers[l].bias - &avg_db;
         }
-        println!("cost {}", cost);
+
+        return cost;
     }
 }
 
@@ -162,12 +173,12 @@ impl Metrics for NeuralNetworkModel {
             target.len(),
             "There must be as many inputs as targets."
         );
-        let input = self.scaler.transform(input);
         let mut total = 0.0;
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
-            let error = 1.0 / (self.network.cost(&input_slice, &target_slice) + 1.0);
+            let result = self.predict(&input_slice);
+            let error = self.network.cost(&result, &target_slice);
             total += error;
         }
         total / input.len() as f32

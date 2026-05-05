@@ -64,7 +64,8 @@ impl Trainable for Perceptron {
         })
     }
     
-    fn train_step(&mut self, input: &Tensor, target: &Tensor) {
+    fn train_step(&mut self, input: &Tensor, target: &Tensor) -> f32{
+        let mut cost_avr = 0.0;
         for i in 0..input.len() {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
@@ -73,7 +74,9 @@ impl Trainable for Perceptron {
             let error = self.gradient(cost, &result, &target_slice);
             self.weights += &input_slice.t() * &error * self.lr;
             self.bias += error.as_f32() * self.lr;
+            cost_avr += cost / input.len() as f32;
         }
+        return  cost_avr;
     }
 }
 

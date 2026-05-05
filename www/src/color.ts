@@ -1,4 +1,6 @@
-import * as wasm from 'neural_network'
+import init, * as wasm from 'neural_network'
+
+await init()
 
 let data = new Float32Array([0, 0, 0, 255, 255, 255, 0, 0, 255, 255, 0, 0, 0, 255, 0],);
 let targets = new Float32Array([1, 0, 1, 1, 0]);

@@ -1,4 +1,6 @@
-import * as wasm from 'neural_network'
+import init, * as wasm from 'neural_network'
+
+await init()
 
 let data = new Float32Array([
     2.0, 60.0, 50.0,
@@ -14,7 +16,7 @@ let data = new Float32Array([
 let targets = new Float32Array([0, 0, 1, 1, 0, 0, 1, 1]);
 
 let model = new wasm.LogisticRegressionJS(3, 0.2)
-model.fit(data, targets, 10);
+model.fit(data, targets, 100);
 
 console.log(model.evaluate(data, targets));
 

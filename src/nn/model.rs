@@ -11,7 +11,7 @@ pub trait Trainable {
     fn predict(&self, input: &Tensor) -> Tensor;
     fn cost(&self, result: &Tensor, target: &Tensor) -> f32;
     fn gradient(&self, cost: f32, result: &Tensor, target: &Tensor) -> Tensor;
-    fn train_step(&mut self, input: &Tensor, target: &Tensor);
+    fn train_step(&mut self, input: &Tensor, target: &Tensor) -> f32;
 }
 
 pub trait Metrics {
