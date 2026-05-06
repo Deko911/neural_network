@@ -5,20 +5,20 @@ use crate::core::tensor::Tensor;
 #[wasm_bindgen]
 #[derive(Debug, Clone, Copy)]
 pub enum ACTIVATIONS {
-    DEFAULT,
+    LINEAR,
     SIGMOID,
 }
 
 impl Default for ACTIVATIONS {
     fn default() -> Self {
-        ACTIVATIONS::DEFAULT
+        ACTIVATIONS::LINEAR
     }
 }
 
 pub fn get_function(activation: ACTIVATIONS) -> fn(&Tensor) -> Tensor {
     use ACTIVATIONS::*;
     match activation {
-        DEFAULT => default,
+        LINEAR => linear,
         SIGMOID => sigmoid
     }
 }
@@ -26,12 +26,12 @@ pub fn get_function(activation: ACTIVATIONS) -> fn(&Tensor) -> Tensor {
 pub fn get_prime(activation: ACTIVATIONS) -> fn(&Tensor) -> Tensor {
     use ACTIVATIONS::*;
     match activation {
-        DEFAULT => default_prime,
+        LINEAR => linear_prime,
         SIGMOID => sigmoid_prime
     }
 }
 
-fn default(x: &Tensor) -> Tensor {
+fn linear(x: &Tensor) -> Tensor {
     x.clone()
 }
 
@@ -39,7 +39,7 @@ fn sigmoid(x: &Tensor) -> Tensor {
     x.map(|el| 1.0 / (1.0 + (-el).exp()))
 }
 
-fn default_prime (_: &Tensor) -> Tensor {
+fn linear_prime (_: &Tensor) -> Tensor {
     Tensor::from_elem(1.0)
 }
 

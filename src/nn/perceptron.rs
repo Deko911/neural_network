@@ -10,24 +10,27 @@ pub struct Perceptron {
     bias: f32,
     lr: f32,
     activation: fn(&Tensor) -> Tensor,
-    loss: fn(&Tensor, &Tensor) -> f32
+    loss: fn(&Tensor, &Tensor) -> f32,
+    loss_name: LOSS
 }
 
 pub struct PerceptronModel {
     network: Perceptron,
-    scaler: StandardScaler,
+    input_scaler: StandardScaler,
+    output_scaler: StandardScaler
 }
 
 impl Perceptron {
-    pub fn new(input_size: usize, lr: f32, activation: ACTIVATIONS, loss: LOSS) -> Self {
+    pub fn new(input_size: usize, lr: f32, activation: ACTIVATIONS, loss_name: LOSS) -> Self {
         let activation = activation::get_function(activation);
-        let loss = loss::get_function(loss);
+        let loss = loss::get_function(loss_name);
         Self {
             weights: Tensor::zeros((input_size, 1)),
             bias: 0.0,
             lr,
             activation,
-            loss
+            loss,
+            loss_name
         }
     }
 }
@@ -38,7 +41,8 @@ impl PerceptronModel {
         let loss = loss.unwrap_or_default();
         Self {
             network: Perceptron::new(input_size, lr, activation, loss),
-            scaler: StandardScaler::new(),
+            input_scaler: StandardScaler::new(),
+            output_scaler: StandardScaler::new()
         }
     }
 }
@@ -83,8 +87,9 @@ impl Trainable for Perceptron {
 impl Model for PerceptronModel {
     
     fn predict(&self, input: &Tensor) -> Tensor {
-        let input = self.scaler.transform(input);
-        self.network.predict(&input)
+        let input = self.input_scaler.transform(input);
+        let result = self.network.predict(&input);
+        self.output_scaler.inverse_transform(&result)
     }
     
     fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
@@ -104,10 +109,15 @@ impl Model for PerceptronModel {
             target.len(),
             "There must be as many inputs as targets."
         );
-        self.scaler.fit(input);
-        let input = self.scaler.transform(input);
+        self.input_scaler.fit(input);
+        let input = self.input_scaler.transform(input);
+        let mut target = target.clone();
+        if loss::is_scalable(self.network.loss_name){
+            self.output_scaler.fit(&target);
+            target = self.output_scaler.transform(&target);
+        }
         for _ in 0..epochs {
-            self.network.train_step(&input, target);
+            self.network.train_step(&input, &target);
         }
     }
 }
@@ -124,7 +134,7 @@ impl Metrics for PerceptronModel {
             let input_slice = input.row(i);
             let target_slice = target.row(i);
             let result = self.predict(&input_slice);
-            let error = 1.0 / (self.network.cost(&result, &target_slice) + 1.0);
+            let error = self.network.cost(&result, &target_slice);
             total += error;
         }
         total / input.len() as f32

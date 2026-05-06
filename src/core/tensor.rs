@@ -160,6 +160,15 @@ impl Add<f32> for Tensor {
     }
 }
 
+impl Add<&Tensor> for Tensor {
+    type Output = Self;
+    fn add(self, rhs: &Tensor) -> Self::Output {
+        Self {
+            data: self.data + &rhs.data
+        }
+    }
+}
+
 impl Add for &Tensor {
     type Output = Tensor;
     fn add(self, rhs: Self) -> Self::Output {
@@ -174,6 +183,15 @@ impl Add<f32> for &Tensor {
     fn add(self, rhs: f32) -> Self::Output {
         Tensor {
             data: &self.data + rhs
+        }
+    }
+}
+
+impl Add<Tensor> for &Tensor {
+    type Output = Tensor;
+    fn add(self, rhs: Tensor) -> Self::Output {
+        Tensor {
+            data: &self.data + rhs.data
         }
     }
 }

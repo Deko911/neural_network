@@ -42,6 +42,8 @@ impl NeuralNetwork {
         let last_activation = self.layers.last().unwrap().activation_name;
         let activation_prime = activation::get_prime(last_activation);
         let cost_prime = loss::get_prime(self.loss_name);
+        /* println!("input {} {}", input, target);
+        println!("cost prime {}", cost_prime(&activation, target)); */
         // delta = dC/da * da/dz
         let mut delta = cost_prime(&activation, target) * activation_prime(&zs.last().unwrap());
         nabla_b[ls - 1] = delta.clone();
@@ -62,7 +64,8 @@ impl NeuralNetwork {
 
 pub struct NeuralNetworkModel {
     network: NeuralNetwork,
-    scaler: StandardScaler
+    input_scaler: StandardScaler,
+    output_scaler: StandardScaler
 }
 
 impl NeuralNetworkModel {
@@ -70,7 +73,8 @@ impl NeuralNetworkModel {
         let loss = loss.unwrap_or_default();
         Self {
             network: NeuralNetwork::new(layers, lr, loss),
-            scaler: StandardScaler::new(),
+            input_scaler: StandardScaler::new(),
+            output_scaler: StandardScaler::new(),
         }
     }
 }
@@ -129,7 +133,7 @@ impl Trainable for NeuralNetwork {
             self.layers[l].weights = &self.layers[l].weights - &avg_dw;
             self.layers[l].bias = &self.layers[l].bias - &avg_db;
         }
-
+        println!("cost {}", cost);
         return cost;
     }
 }
@@ -137,8 +141,9 @@ impl Trainable for NeuralNetwork {
 impl Model for NeuralNetworkModel {
     
     fn predict(&self, input: &Tensor) -> Tensor {
-        let input = self.scaler.transform(input);
-        self.network.predict(&input)
+        let input = self.input_scaler.transform(input);
+        let result = self.network.predict(&input);
+        self.output_scaler.inverse_transform(&result)
     }
     
     fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
@@ -158,10 +163,15 @@ impl Model for NeuralNetworkModel {
             target.len(),
             "There must be as many inputs as targets."
         );
-        self.scaler.fit(input);
-        let input = self.scaler.transform(input);
+        self.input_scaler.fit(input);
+        let input = self.input_scaler.transform(input);
+        let mut target = target.clone();
+        if loss::is_scalable(self.network.loss_name){
+            self.output_scaler.fit(&target);
+            target = self.output_scaler.transform(&target);
+        }
         for _ in 0..epochs {
-            self.network.train_step(&input, target);
+            self.network.train_step(&input, &target);
         }
     }
 }

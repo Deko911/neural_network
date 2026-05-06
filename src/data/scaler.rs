@@ -1,34 +1,43 @@
 use crate::core::tensor::Tensor;
 
 pub struct StandardScaler {
-    mean: f32,
-    std: f32,
+    mean: Tensor,
+    std: Tensor,
 }
 
 impl StandardScaler {
     pub fn new() -> Self {
         Self {
-            mean: 0.0,
-            std: 1.0,
+            mean: Tensor::from_elem(0.0),
+            std: Tensor::from_elem(1.0),
         }
     }
 
     pub fn fit(&mut self, data: &Tensor) {
-        let mean = data.iter().map(|x| x).sum::<f32>() / data.size() as f32;
-        let sum = data.iter().map(|x| (*x - mean).powi(2)).sum::<f32>() / data.size() as f32;
-        let std = sum.sqrt().max(1e-8);
-        self.mean = mean;
-        self.std = std;
+        let data = data.t();
+        let n = data.len();
+        let mut mean_vec: Vec<f32> = vec![];
+        let mut std_vec: Vec<f32> = vec![];
+
+        for i in 0..n {
+            let data_slice = data.row(i);
+            let size = data_slice.size() as f32;
+            let mean = data_slice.iter().map(|x| x).sum::<f32>() / size;
+            let sum = data_slice.iter().map(|x| (*x - mean).powi(2)).sum::<f32>() / size;
+            let std = sum.sqrt().max(1e-8);
+            mean_vec.push(mean);
+            std_vec.push(std);
+        }
+
+        self.mean = Tensor::from_vec(mean_vec);
+        self.std = Tensor::from_vec(std_vec);
     }
 
     pub fn transform(&self, input: &Tensor) -> Tensor {
-        let data: Vec<f32> = input.iter().map(|x| (*x - self.mean) / self.std).collect();
-        let (rows, cols) = input.shape_tuple();
-        let tensor = Tensor::from_shape_vec((rows, cols), data);
-        tensor
+        &(input - &self.mean) / &self.std
     }
 
-    pub fn inverse_transform(&self, x: f32) -> f32 {
-        x * self.std + self.mean
+    pub fn inverse_transform(&self, x: &Tensor) -> Tensor {
+        &self.std * x + &self.mean
     }
 }

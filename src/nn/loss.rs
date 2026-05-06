@@ -37,6 +37,15 @@ pub fn get_prime(activation: LOSS) -> fn(&Tensor, &Tensor) -> Tensor {
     }
 }
 
+pub fn is_scalable(activation: LOSS) -> bool {
+    use LOSS::*;
+    match activation {
+        DEFAULT => true,
+        BINARY_CROSS_ENTROPY => false,
+        QUAD => true
+    }
+}
+
 fn default(prediction: &Tensor, target: &Tensor) -> f32 {
     let target_slice = target.as_slice().unwrap();
     let mut count = 0;
