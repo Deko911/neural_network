@@ -105,6 +105,10 @@ impl Tensor {
         Self { data }
     }
 
+    pub fn norm(&self) -> f32{
+        self.iter().map(|x| x.powi(2)).sum()
+    }
+
     pub fn iter(&self) -> Iter<'_, f32, Dim<IxDynImpl>> {
         self.data.iter()
     }

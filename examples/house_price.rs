@@ -24,11 +24,11 @@ fn main() {
             Layer::new((8, 4), neural_network::nn::activation::ACTIVATIONS::LINEAR),
             Layer::new((4, 1), neural_network::nn::activation::ACTIVATIONS::LINEAR),
         ],
-        0.07,
+        1.0,
         Some(neural_network::nn::loss::LOSS::QUAD),
     );
 
-    nn.fit(&inputs, &targets, 50);
+    nn.fit(&inputs, &targets, 100);
     println!("Cost {}", nn.evaluate(&inputs, &targets));
 
     let new_house = Tensor::from_vec(vec![95.0, 3.0, 8.0]);

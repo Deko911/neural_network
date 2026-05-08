@@ -6,6 +6,14 @@ use crate::core::tensor::Tensor;
 
 use super::layer::Layer;
 
+const GRADIENT_THRESHOLD: f32 = 25.0;
+const MIN_LEARNING: f32 = 0.001;
+const MAX_LR: f32 = 5.0;
+const MIN_LR: f32 = 0.1;
+const PATIENCE: usize = 5;
+const LR_AMPLIFICATION_FACTOR: f32 = 1.1;
+const LR_REDUCING_FACTOR: f32 = 0.7;
+
 pub struct NeuralNetwork {
     layers: Vec<Layer>,
     lr: f32,
@@ -42,8 +50,6 @@ impl NeuralNetwork {
         let last_activation = self.layers.last().unwrap().activation_name;
         let activation_prime = activation::get_prime(last_activation);
         let cost_prime = loss::get_prime(self.loss_name);
-        /* println!("input {} {}", input, target);
-        println!("cost prime {}", cost_prime(&activation, target)); */
         // delta = dC/da * da/dz
         let mut delta = cost_prime(&activation, target) * activation_prime(&zs.last().unwrap());
         nabla_b[ls - 1] = delta.clone();
@@ -106,7 +112,7 @@ impl Trainable for NeuralNetwork {
     fn train_step(&mut self, input: &Tensor, target: &Tensor) -> f32 {
         let mut cost = 0.0;
         let n = input.len();
-        // Acumular gradientes para batch
+        // Gradient for the batch
         let mut nabla_w_sum: Vec<Option<Tensor>> = vec![None; self.layers.len()];
         let mut nabla_b_sum: Vec<Option<Tensor>> = vec![None; self.layers.len()];
         for i in 0..n {
@@ -126,10 +132,23 @@ impl Trainable for NeuralNetwork {
                 });
             }
         }
-        // Actualizar pesos y bias con el gradiente promedio
+        // Update weighs and bias
         for l in 0..self.layers.len() {
-            let avg_dw = nabla_w_sum[l].as_ref().unwrap() * (self.lr / n as f32);
-            let avg_db = nabla_b_sum[l].as_ref().unwrap() * (self.lr / n as f32);
+            let mut grad_w = nabla_w_sum[l].clone().unwrap();
+            let mut grad_b = nabla_b_sum[l].clone().unwrap();
+
+            if grad_w.norm() > GRADIENT_THRESHOLD {
+                let norm = GRADIENT_THRESHOLD / grad_w.norm();
+                grad_w = grad_w * norm
+            }
+
+            if grad_b.norm() > GRADIENT_THRESHOLD {
+                let norm = GRADIENT_THRESHOLD / grad_b.norm();
+                grad_b = grad_b * norm
+            }
+
+            let avg_dw = grad_w * (self.lr / n as f32);
+            let avg_db = grad_b * (self.lr / n as f32);
             self.layers[l].weights = &self.layers[l].weights - &avg_dw;
             self.layers[l].bias = &self.layers[l].bias - &avg_db;
         }
@@ -152,8 +171,22 @@ impl Model for NeuralNetworkModel {
             target.len(),
             "There must be as many inputs as targets."
         );
-        for _ in 0..epochs {
-            self.network.train_step(&input, target);
+        let mut last_cost = f32::NAN;
+        for i in 0..epochs {
+            let cost = self.network.train_step(&input, target);
+            if last_cost.is_nan(){
+                last_cost = cost;
+                continue;
+            }
+            if i % PATIENCE == 0 {
+                if last_cost - cost < MIN_LEARNING {
+                    self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
+                }
+                if cost > last_cost {
+                    self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
+                }
+            }
+            last_cost = cost
         }
     }
     
@@ -170,8 +203,22 @@ impl Model for NeuralNetworkModel {
             self.output_scaler.fit(&target);
             target = self.output_scaler.transform(&target);
         }
-        for _ in 0..epochs {
-            self.network.train_step(&input, &target);
+        let mut last_cost = f32::NAN;
+        for i in 0..epochs {
+            let cost = self.network.train_step(&input, &target);
+            if last_cost.is_nan(){
+                last_cost = cost;
+                continue;
+            }
+            if i % PATIENCE == 0 {
+                if last_cost - cost < MIN_LEARNING {
+                    self.network.lr = MAX_LR.min(self.network.lr * LR_AMPLIFICATION_FACTOR);
+                }
+                if cost > last_cost {
+                    self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
+                }
+            }
+            last_cost = cost
         }
     }
 }
