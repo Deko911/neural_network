@@ -1,6 +1,6 @@
 use crate::data::scaler::StandardScaler;
-use crate::nn::activation;
-use super::loss::{self, LOSS};
+use crate::nn::activation::ACTIVATIONS;
+use super::loss::LOSS;
 use super::model::{Metrics, Model, Trainable};
 use crate::core::tensor::Tensor;
 
@@ -23,7 +23,7 @@ pub struct NeuralNetwork {
 
 impl NeuralNetwork {
     pub fn new(layers: Vec<Layer>, lr: f32, loss_name: LOSS) -> Self{
-        let loss = loss::get_function(loss_name);
+        let loss = LOSS::get_function(loss_name);
         Self {
             layers,
             lr,
@@ -48,17 +48,21 @@ impl NeuralNetwork {
             activations.push(activation.clone());
         }
         let last_activation = self.layers.last().unwrap().activation_name;
-        let activation_prime = activation::get_prime(last_activation);
-        let cost_prime = loss::get_prime(self.loss_name);
+        let activation_prime = ACTIVATIONS::get_prime(last_activation);
+        let cost_prime = LOSS::get_prime(self.loss_name);
         // delta = dC/da * da/dz
-        let mut delta = cost_prime(&activation, target) * activation_prime(&zs.last().unwrap());
+        let mut delta = if let ACTIVATIONS::SOFTMAX = last_activation {
+            &activation - target
+        }  else {
+            cost_prime(&activation, target) * activation_prime(&zs.last().unwrap())
+        };
         nabla_b[ls - 1] = delta.clone();
         nabla_w[ls - 1] = activations[ls - 1].t().dot(&delta);
 
         for i in (0..ls-1).rev() {
             let z = &zs[i];
             let activation_layer = &self.layers[i];
-            let activation_prime = activation::get_prime(activation_layer.activation_name);
+            let activation_prime = ACTIVATIONS::get_prime(activation_layer.activation_name);
             // delta = (delta * W^T) .* f'(z)
             delta = delta.dot(&self.layers[i+1].weights.t()) * activation_prime(z);
             nabla_b[i] = delta.clone();
@@ -123,12 +127,12 @@ impl Trainable for NeuralNetwork {
             cost += self.cost(&result, &target_slice) / n as f32;
             for l in 0..self.layers.len() {
                 nabla_w_sum[l] = Some(match &nabla_w_sum[l] {
-                    Some(ref acc) => acc + &delta_weights[l],
-                    None => delta_weights[l].clone(),
+                    Some(ref acc) => acc + &delta_weights[l] / n as f32,
+                    None => delta_weights[l].clone() / n as f32,
                 });
                 nabla_b_sum[l] = Some(match &nabla_b_sum[l] {
-                    Some(ref acc) => acc + &delta_bias[l],
-                    None => delta_bias[l].clone(),
+                    Some(ref acc) => acc + &delta_bias[l] / n as f32,
+                    None => delta_bias[l].clone() / n as f32,
                 });
             }
         }
@@ -180,7 +184,7 @@ impl Model for NeuralNetworkModel {
             }
             if i % PATIENCE == 0 {
                 if last_cost - cost < MIN_LEARNING {
-                    self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
+                    self.network.lr = MAX_LR.min(self.network.lr * LR_AMPLIFICATION_FACTOR);
                 }
                 if cost > last_cost {
                     self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
@@ -199,7 +203,7 @@ impl Model for NeuralNetworkModel {
         self.input_scaler.fit(input);
         let input = self.input_scaler.transform(input);
         let mut target = target.clone();
-        if loss::is_scalable(self.network.loss_name){
+        if LOSS::is_scalable(self.network.loss_name){
             self.output_scaler.fit(&target);
             target = self.output_scaler.transform(&target);
         }

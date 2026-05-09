@@ -10,7 +10,8 @@ const EPS: f32 = 1e-7;
 pub enum LOSS {
     DEFAULT,
     BINARY_CROSS_ENTROPY,
-    QUAD
+    QUAD,
+    CROSS_ENTROPY
 }
 
 impl Default for LOSS {
@@ -19,41 +20,49 @@ impl Default for LOSS {
     }
 }
 
-pub fn get_function(loss: LOSS) -> fn(&Tensor, &Tensor) -> f32 {
-    use LOSS::*;
-    match loss {
-        DEFAULT => default,
-        BINARY_CROSS_ENTROPY => binary_cross_entropy,
-        QUAD => quad
+impl LOSS {
+    pub fn get_function(loss: LOSS) -> fn(&Tensor, &Tensor) -> f32 {
+        use LOSS::*;
+        match loss {
+            DEFAULT => default,
+            BINARY_CROSS_ENTROPY => binary_cross_entropy,
+            QUAD => quad,
+            CROSS_ENTROPY => cross_entropy
+        }
     }
-}
 
-pub fn get_prime(activation: LOSS) -> fn(&Tensor, &Tensor) -> Tensor {
-    use LOSS::*;
-    match activation {
-        DEFAULT => default_prime,
-        BINARY_CROSS_ENTROPY => binary_cross_entropy_prime,
-        QUAD => quad_prime
+    pub fn get_prime(activation: LOSS) -> fn(&Tensor, &Tensor) -> Tensor {
+        use LOSS::*;
+        match activation {
+            DEFAULT => default_prime,
+            BINARY_CROSS_ENTROPY => binary_cross_entropy_prime,
+            QUAD => quad_prime,
+            CROSS_ENTROPY => default_prime // this cannot happen
+        }
     }
-}
 
-pub fn is_scalable(activation: LOSS) -> bool {
-    use LOSS::*;
-    match activation {
-        DEFAULT => true,
-        BINARY_CROSS_ENTROPY => false,
-        QUAD => true
+    pub fn is_scalable(activation: LOSS) -> bool {
+        use LOSS::*;
+        match activation {
+            DEFAULT => true,
+            BINARY_CROSS_ENTROPY => false,
+            QUAD => true,
+            CROSS_ENTROPY => false
+        }
     }
 }
 
 fn default(prediction: &Tensor, target: &Tensor) -> f32 {
     let target_slice = target.as_slice().unwrap();
     let mut count = 0;
-    let loss: f32 = prediction.iter().map(|x| {
-        let result = target_slice[count] - x;
-        count += 1;
-        result.abs()
-    }).sum();
+    let loss: f32 = prediction
+        .iter()
+        .map(|x| {
+            let result = target_slice[count] - x;
+            count += 1;
+            result.abs()
+        })
+        .sum();
     loss / target.len() as f32
 }
 
@@ -64,17 +73,20 @@ fn default_prime(prediction: &Tensor, target: &Tensor) -> Tensor {
         let sign = (x - target_slice[count]).signum() as f32;
         count += 1;
         sign / prediction.len() as f32
-    }) 
+    })
 }
 
 fn quad(prediction: &Tensor, target: &Tensor) -> f32 {
     let target_slice = target.as_slice().unwrap();
     let mut count = 0;
-    let loss: f32 = prediction.iter().map(|x| {
-        let result = target_slice[count] - x;
-        count += 1;
-        result.powi(2)
-    }).sum();
+    let loss: f32 = prediction
+        .iter()
+        .map(|x| {
+            let result = target_slice[count] - x;
+            count += 1;
+            result.powi(2)
+        })
+        .sum();
     loss / target.len() as f32
 }
 
@@ -85,17 +97,27 @@ fn quad_prime(prediction: &Tensor, target: &Tensor) -> Tensor {
         let result = x - target_slice[count];
         count += 1;
         2.0 * result / prediction.len() as f32
-    }) 
+    })
 }
 
 fn binary_cross_entropy(prediction: &Tensor, target: &Tensor) -> f32 {
     let prediction = prediction.as_f32();
     let target = target.as_f32();
     let prediction = prediction.clamp(EPS, 1.0 - EPS);
-    let result = target * prediction.ln() + (1.0 - target) *  (1.0 - prediction).ln();
+    let result = target * prediction.ln() + (1.0 - target) * (1.0 - prediction).ln();
     -result
 }
 
-fn binary_cross_entropy_prime (prediction: &Tensor, target: &Tensor) -> Tensor {
+fn binary_cross_entropy_prime(prediction: &Tensor, target: &Tensor) -> Tensor {
     prediction - target
+}
+
+fn cross_entropy(prediction: &Tensor, target: &Tensor) -> f32 {
+    let prediction = prediction.to_vec();
+    let target = target.to_vec();
+    let mut sum = 0.0;
+    for (i, pre) in prediction.iter().enumerate() {
+        sum -= target[i]*pre.ln();
+    }
+    sum
 }

@@ -2,6 +2,8 @@ use neural_network::core::tensor::Tensor;
 use neural_network::nn::layer::Layer;
 use neural_network::nn::model::{Metrics, Model};
 use neural_network::nn::neural_network::NeuralNetworkModel;
+use neural_network::nn::activation::ACTIVATIONS;
+use neural_network::nn::layer::INITIALIZER;
 
 fn main() {
     // [size (m2), rooms, years]
@@ -20,15 +22,15 @@ fn main() {
 
     let mut nn = NeuralNetworkModel::new(
         vec![
-            Layer::new((3, 8), neural_network::nn::activation::ACTIVATIONS::LINEAR),
-            Layer::new((8, 4), neural_network::nn::activation::ACTIVATIONS::LINEAR),
-            Layer::new((4, 1), neural_network::nn::activation::ACTIVATIONS::LINEAR),
+            Layer::new((3, 8), ACTIVATIONS::RELU, INITIALIZER::HE),
+            Layer::new((8, 4), ACTIVATIONS::RELU, INITIALIZER::HE),
+            Layer::new((4, 1), ACTIVATIONS::LINEAR, INITIALIZER::XAVIER),
         ],
         1.0,
         Some(neural_network::nn::loss::LOSS::QUAD),
     );
 
-    nn.fit(&inputs, &targets, 100);
+    nn.fit(&inputs, &targets, 1000);
     println!("Cost {}", nn.evaluate(&inputs, &targets));
 
     let new_house = Tensor::from_vec(vec![95.0, 3.0, 8.0]);

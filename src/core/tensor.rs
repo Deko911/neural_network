@@ -4,7 +4,7 @@ use std::fmt::{Display, Debug};
 use ndarray::linalg::Dot;
 use ndarray::{Dim, IxDynImpl};
 use ndarray::iter::{Iter, IterMut};
-use rand::Rng;
+use rand::RngExt;
 
 #[derive(Clone)]
 pub struct Tensor {
@@ -44,9 +44,10 @@ impl Tensor {
     }
 
     pub fn random(shape: (usize, usize)) -> Self {
-        let mut vec = vec![0.0f32; shape.0 * shape.1];
+        let mut vec = vec![0; shape.0 * shape.1];
         rand::fill(&mut vec[..]);
-        let t = Self::from_shape_vec(shape, vec);
+        let data = vec.iter().map(|x| *x as f32).collect();
+        let t = Self::from_shape_vec(shape, data);
         t * 2.0 - 1.0 
     }
 
@@ -55,6 +56,16 @@ impl Tensor {
         let mut rng = rand::rng();
         let data = ndarray::Array2::from_shape_fn((fan_in, fan_out), |_| {
             rng.random_range(-limit..limit)
+        }).into_dyn();
+        Tensor { data }
+    }
+
+    pub fn he_init(fan_in: usize, fan_out: usize) -> Self {
+        let std = (2.0 / fan_in as f32).sqrt();
+        let mut rng = rand::rng();
+        let normal = rand_distr::Normal::new(0.0, std).unwrap();
+        let data = ndarray::Array2::from_shape_fn((fan_in, fan_out), |_| {
+            rng.sample(normal)
         }).into_dyn();
         Tensor { data }
     }

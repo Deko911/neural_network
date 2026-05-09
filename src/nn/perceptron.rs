@@ -1,8 +1,8 @@
 use super::model::{Model, Trainable};
 use crate::core::tensor::Tensor;
 use crate::data::scaler::StandardScaler;
-use crate::nn::activation::{self, ACTIVATIONS};
-use crate::nn::loss::{self, LOSS};
+use crate::nn::activation::ACTIVATIONS;
+use crate::nn::loss::LOSS;
 use crate::nn::model::Metrics;
 
 pub struct Perceptron {
@@ -22,8 +22,8 @@ pub struct PerceptronModel {
 
 impl Perceptron {
     pub fn new(input_size: usize, lr: f32, activation: ACTIVATIONS, loss_name: LOSS) -> Self {
-        let activation = activation::get_function(activation);
-        let loss = loss::get_function(loss_name);
+        let activation = ACTIVATIONS::get_function(activation);
+        let loss = LOSS::get_function(loss_name);
         Self {
             weights: Tensor::zeros((input_size, 1)),
             bias: 0.0,
@@ -112,7 +112,7 @@ impl Model for PerceptronModel {
         self.input_scaler.fit(input);
         let input = self.input_scaler.transform(input);
         let mut target = target.clone();
-        if loss::is_scalable(self.network.loss_name){
+        if LOSS::is_scalable(self.network.loss_name){
             self.output_scaler.fit(&target);
             target = self.output_scaler.transform(&target);
         }

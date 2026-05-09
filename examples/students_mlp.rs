@@ -2,14 +2,15 @@ use neural_network::core::tensor::Tensor;
 use neural_network::nn::layer::Layer;
 use neural_network::nn::model::{Metrics, Model};
 use neural_network::nn::neural_network::NeuralNetworkModel;
-
+use neural_network::nn::activation::ACTIVATIONS;
+use neural_network::nn::layer::INITIALIZER;
 
 fn main() {
     let mut nn = NeuralNetworkModel::new(vec![
-        Layer::new((3, 3), neural_network::nn::activation::ACTIVATIONS::SIGMOID),
-        Layer::new((3, 3), neural_network::nn::activation::ACTIVATIONS::SIGMOID),
-        Layer::new((3, 1), neural_network::nn::activation::ACTIVATIONS::SIGMOID)
-        ], 1.0, Some(neural_network::nn::loss::LOSS::BINARY_CROSS_ENTROPY));
+        Layer::new((3, 3), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER),
+        Layer::new((3, 3), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER),
+        Layer::new((3, 1), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER)
+        ], 5.0, Some(neural_network::nn::loss::LOSS::BINARY_CROSS_ENTROPY));
     let student = Tensor::from_vec([5.0, 75.0, 68.0].to_vec());
     let inputs = Tensor::from_matrix(
         &vec![

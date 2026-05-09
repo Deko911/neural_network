@@ -3,7 +3,22 @@
 use std::fmt::{Debug, Display};
 
 use crate::core::tensor::Tensor;
-use super::activation::{self, ACTIVATIONS};
+use super::activation::ACTIVATIONS;
+
+pub enum INITIALIZER {
+    XAVIER,
+    HE
+}
+
+impl INITIALIZER {
+    pub fn init(initializer: INITIALIZER, fan_in: usize, fan_out: usize) -> Tensor {
+        use INITIALIZER::*;
+        match initializer {
+            XAVIER => Tensor::xavier_init(fan_in, fan_out),
+            HE => Tensor::he_init(fan_in, fan_out)
+        }
+    }
+}
 
 pub struct Layer {
     pub weights: Tensor,
@@ -15,11 +30,11 @@ pub struct Layer {
 impl Layer {
     ///
     /// (inputs, neurons)
-    pub fn new(shape: (usize, usize), activation: ACTIVATIONS) -> Self {
-        let weights = Tensor::xavier_init(shape.0, shape.1);
+    pub fn new(shape: (usize, usize), activation: ACTIVATIONS, initializer: INITIALIZER) -> Self {
+        let weights = INITIALIZER::init(initializer, shape.0, shape.1);
         let bias = Tensor::zeros((1, shape.1));
         let activation_name = activation;
-        let activation = activation::get_function(activation);
+        let activation = ACTIVATIONS::get_function(activation);
         Self { weights, bias, activation, activation_name }
     }
 
