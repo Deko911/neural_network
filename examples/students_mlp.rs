@@ -10,7 +10,7 @@ fn main() {
         Layer::new((3, 3), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER),
         Layer::new((3, 3), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER),
         Layer::new((3, 1), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER)
-        ], 5.0, Some(neural_network::nn::loss::LOSS::BINARY_CROSS_ENTROPY));
+        ], 1.0, Some(neural_network::nn::loss::LOSS::BINARY_CROSS_ENTROPY));
     let student = Tensor::from_vec([5.0, 75.0, 68.0].to_vec());
     let inputs = Tensor::from_matrix(
         &vec![
@@ -25,7 +25,7 @@ fn main() {
         ],
     );
     let targets = Tensor::from_vec_col(vec![0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]);
-    nn.fit(&inputs, &targets, 5000);
+    nn.fit(&inputs, &targets, 3000);
     println!("{}", nn.evaluate(&inputs, &targets));
     println!("{}", nn.predict(&student));
 }
