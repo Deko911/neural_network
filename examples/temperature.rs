@@ -9,7 +9,7 @@ fn main () {
     let inputs = Tensor::from_vec_col(vec![-20.0, -10.0, 0.0, 10.0, 20.0]);
     let data = Tensor::from_vec_col(vec![-4.0, 14.0, 32.0, 50.0, 68.0]);
     println!("{}", inputs);
-    model.fit(&inputs, &data, 15);
+    model.fit(&inputs, &data, 15, 0);
     let result = model.accurate(&inputs, &data);
     println!("{:?}", result);
     println!("{}", model.predict(&Tensor::from_elem(30.0)));

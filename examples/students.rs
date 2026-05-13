@@ -18,7 +18,7 @@ fn main() {
     );
     let targets = Tensor::from_vec_col(vec![0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]);
     let mut model = LogisticRegression::new(3, 1.0, None);
-    model.fit(&inputs, &targets, 10);
+    model.fit(&inputs, &targets, 10, 0);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
     let student = Tensor::from_vec(vec![5.0, 75.0, 68.0]);

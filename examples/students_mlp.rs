@@ -25,7 +25,7 @@ fn main() {
         ],
     );
     let targets = Tensor::from_vec_col(vec![0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0]);
-    nn.fit(&inputs, &targets, 3000);
+    nn.fit(&inputs, &targets, 3000, 0);
     println!("{}", nn.evaluate(&inputs, &targets));
     println!("{}", nn.predict(&student));
 }

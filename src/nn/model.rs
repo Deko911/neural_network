@@ -1,10 +1,9 @@
 use crate::core::tensor::Tensor;
 
 pub trait Model {
-    
     fn predict(&self, input: &Tensor) -> Tensor;
-    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize);
-    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize);
+    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize);
+    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize);
 }
 
 pub trait Trainable {

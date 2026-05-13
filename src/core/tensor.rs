@@ -70,6 +70,27 @@ impl Tensor {
         Tensor { data }
     }
 
+    pub fn create_batch(inputs: &Tensor, targets: &Tensor, size: usize) -> (Tensor, Tensor) {
+        let n = inputs.len();
+        let size= size.min(n);
+        let mut result_inputs: Vec<Vec<f32>> = vec![];
+        let mut result_targets: Vec<Vec<f32>> = vec![];
+
+        let mut options: Vec<_> = (0..n).collect();
+        let mut rng = rand::rng();
+
+        for _ in 0..size {
+            let rand_n = rng.random_range(0..options.len());
+            let rand_option = options[rand_n];
+            let rand_input = inputs.row(rand_option);
+            let rand_target = targets.row(rand_option);
+            result_inputs.push(rand_input.to_vec());
+            result_targets.push(rand_target.to_vec());
+            options.remove(rand_n);
+        }
+        return (Tensor::from_matrix(&result_inputs), Tensor::from_matrix(&result_targets));
+    } 
+
     pub fn as_slice(&self) -> Option<&[f32]> {
         self.data.as_slice()
     }

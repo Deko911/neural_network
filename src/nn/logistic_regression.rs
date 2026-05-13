@@ -50,27 +50,31 @@ impl Model for LogisticRegression {
         self.network.predict(&input)
     }
     
-    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
+    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize) {
         assert_eq!(
             input.len(),
             target.len(),
             "There must be as many inputs as targets."
         );
+        let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         for _ in 0..epochs {
-            self.network.train_step(&input, target);
+            let (batch_i, batch_t) = Tensor::create_batch(input, target, batch_size);
+            self.network.train_step(&batch_i, &batch_t);
         }
     }
     
-    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
+    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize) {
         assert_eq!(
             input.len(),
             target.len(),
             "There must be as many inputs as targets."
         );
+        let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         self.scaler.fit(input);
         let input = self.scaler.transform(input);
         for _ in 0..epochs {
-            self.network.train_step(&input, target);
+            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
+            self.network.train_step(&batch_i, &batch_t);
         }
     }
 }

@@ -41,17 +41,17 @@ impl LogisticRegressionJS {
     }
 
     #[wasm_bindgen]
-    pub fn fit(&mut self, input: Vec<f32>, target: &[f32], epochs: usize){
+    pub fn fit(&mut self, input: Vec<f32>, target: &[f32], epochs: usize, batch_size: usize){
         let input = parse_array_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
-        self.inner.fit(&input, target, epochs);
+        self.inner.fit(&input, target, epochs, batch_size);
     }
 
     #[wasm_bindgen]
-    pub fn fit_raw(&mut self, input: Vec<f32>, target: &[f32], epochs: usize){
+    pub fn fit_raw(&mut self, input: Vec<f32>, target: &[f32], epochs: usize, batch_size: usize){
         let input = parse_array_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
-        self.inner.fit_raw(&input, target, epochs);
+        self.inner.fit_raw(&input, target, epochs, batch_size);
     }
 
     #[wasm_bindgen]

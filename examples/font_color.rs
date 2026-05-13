@@ -10,7 +10,7 @@ fn main() {
     let inputs = Tensor::from_matrix(&inputs);
     let targets = Tensor::from_shape_vec((targets.len(), 1), targets);
     let mut model = PerceptronModel::new(3, 0.2, None, None);
-    model.fit(&inputs, &targets, 10);
+    model.fit(&inputs, &targets, 10, 0);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
     println!("{}", model.predict(&Tensor::from_vec(vec![17.0, 17.0, 17.0])));
@@ -26,7 +26,7 @@ fn alternative () {
     let inputs = Tensor::from_matrix(&inputs);
     let targets = Tensor::from_shape_vec((targets.len(), 1), targets);
     let mut model = PerceptronModel::new(3, 0.2, None, None);
-    model.fit(&inputs, &targets, 10);
+    model.fit(&inputs, &targets, 10, 0);
     let result = model.evaluate(&inputs, &targets);
     println!("{:?}", result);
     println!("{}", model.predict(&Tensor::from_vec(vec![17.0, 17.0, 17.0])));

@@ -127,12 +127,12 @@ impl Trainable for NeuralNetwork {
             cost += self.cost(&result, &target_slice) / n as f32;
             for l in 0..self.layers.len() {
                 nabla_w_sum[l] = Some(match &nabla_w_sum[l] {
-                    Some(ref acc) => acc + &delta_weights[l] / n as f32,
-                    None => delta_weights[l].clone() / n as f32,
+                    Some(ref acc) => acc + &delta_weights[l],
+                    None => delta_weights[l].clone(),
                 });
                 nabla_b_sum[l] = Some(match &nabla_b_sum[l] {
-                    Some(ref acc) => acc + &delta_bias[l] / n as f32,
-                    None => delta_bias[l].clone() / n as f32,
+                    Some(ref acc) => acc + &delta_bias[l],
+                    None => delta_bias[l].clone(),
                 });
             }
         }
@@ -169,15 +169,17 @@ impl Model for NeuralNetworkModel {
         self.output_scaler.inverse_transform(&result)
     }
     
-    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
+    fn fit_raw(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize) {
         assert_eq!(
             input.len(),
             target.len(),
             "There must be as many inputs as targets."
         );
+        let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         let mut last_cost = f32::NAN;
         for i in 0..epochs {
-            let cost = self.network.train_step(&input, target);
+            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
+            let cost =self.network.train_step(&batch_i, &batch_t);
             if last_cost.is_nan(){
                 last_cost = cost;
                 continue;
@@ -194,12 +196,13 @@ impl Model for NeuralNetworkModel {
         }
     }
     
-    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize) {
+    fn fit(&mut self, input: &Tensor, target: &Tensor, epochs: usize, batch_size: usize) {
         assert_eq!(
             input.len(),
             target.len(),
             "There must be as many inputs as targets."
         );
+        let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         self.input_scaler.fit(input);
         let input = self.input_scaler.transform(input);
         let mut target = target.clone();
@@ -209,7 +212,8 @@ impl Model for NeuralNetworkModel {
         }
         let mut last_cost = f32::NAN;
         for i in 0..epochs {
-            let cost = self.network.train_step(&input, &target);
+            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
+            let cost = self.network.train_step(&batch_i, &batch_t);
             if last_cost.is_nan(){
                 last_cost = cost;
                 continue;

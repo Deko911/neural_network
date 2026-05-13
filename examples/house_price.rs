@@ -30,7 +30,7 @@ fn main() {
         Some(neural_network::nn::loss::LOSS::QUAD),
     );
 
-    nn.fit(&inputs, &targets, 1000);
+    nn.fit(&inputs, &targets, 1000, 0);
     println!("Cost {}", nn.evaluate(&inputs, &targets));
 
     let new_house = Tensor::from_vec(vec![95.0, 3.0, 8.0]);
