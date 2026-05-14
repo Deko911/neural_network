@@ -260,8 +260,12 @@ impl Model for NeuralNetworkModel {
         let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         let mut last_cost = f32::NAN;
         for i in 0..epochs {
-            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
-            let cost =self.network.train_step(&batch_i, &batch_t);
+            let batches = Tensor::create_batches(&input, &target, batch_size);
+            let mut cost = 0.0;
+            let n_batches = batches.len();
+            for (batch_i, batch_t) in batches {
+                cost += self.network.train_step(&batch_i, &batch_t) / n_batches as f32;
+            }
             if last_cost.is_nan(){
                 last_cost = cost;
                 continue;
@@ -291,8 +295,12 @@ impl Model for NeuralNetworkModel {
         }
         let mut last_cost = f32::NAN;
         for i in 0..epochs {
-            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
-            let cost = self.network.train_step(&batch_i, &batch_t);
+            let batches = Tensor::create_batches(&input, &target, batch_size);
+            let mut cost = 0.0;
+            let n_batches = batches.len();
+            for (batch_i, batch_t) in batches {
+                cost += self.network.train_step(&batch_i, &batch_t) / n_batches as f32;
+            }
             if last_cost.is_nan(){
                 last_cost = cost;
                 continue;

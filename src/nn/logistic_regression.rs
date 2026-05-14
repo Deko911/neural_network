@@ -58,8 +58,10 @@ impl Model for LogisticRegression {
         );
         let batch_size = if batch_size == 0 { input.size() } else { batch_size };
         for _ in 0..epochs {
-            let (batch_i, batch_t) = Tensor::create_batch(input, target, batch_size);
-            self.network.train_step(&batch_i, &batch_t);
+            let batches = Tensor::create_batches(&input, &target, batch_size);
+            for (batch_i, batch_t) in batches {
+                self.network.train_step(&batch_i, &batch_t);
+            }
         }
     }
     
@@ -73,8 +75,10 @@ impl Model for LogisticRegression {
         self.scaler.fit(input);
         let input = self.scaler.transform(input);
         for _ in 0..epochs {
-            let (batch_i, batch_t) = Tensor::create_batch(&input, &target, batch_size);
-            self.network.train_step(&batch_i, &batch_t);
+            let batches = Tensor::create_batches(&input, &target, batch_size);
+            for (batch_i, batch_t) in batches {
+                self.network.train_step(&batch_i, &batch_t);
+            }
         }
     }
 }
