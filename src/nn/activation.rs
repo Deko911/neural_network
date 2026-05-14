@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::core::tensor::Tensor;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ACTIVATIONS {
     LINEAR,
     SIGMOID,

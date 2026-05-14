@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::core::tensor::Tensor;
@@ -6,7 +7,7 @@ const EPS: f32 = 1e-7;
 
 #[wasm_bindgen]
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum LOSS {
     DEFAULT,
     BINARY_CROSS_ENTROPY,
@@ -37,7 +38,7 @@ impl LOSS {
             DEFAULT => default_prime,
             BINARY_CROSS_ENTROPY => binary_cross_entropy_prime,
             QUAD => quad_prime,
-            CROSS_ENTROPY => default_prime // this cannot happen
+            CROSS_ENTROPY => cross_entropy_prime
         }
     }
 
@@ -120,4 +121,8 @@ fn cross_entropy(prediction: &Tensor, target: &Tensor) -> f32 {
         sum -= target[i]*pre.ln();
     }
     sum
+}
+
+fn cross_entropy_prime(prediction: &Tensor, target: &Tensor) -> Tensor {
+    prediction - target
 }

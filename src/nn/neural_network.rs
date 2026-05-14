@@ -1,21 +1,25 @@
+use serde::{Deserialize, Serialize};
+
 use crate::data::scaler::StandardScaler;
 use crate::nn::activation::ACTIVATIONS;
+use crate::nn::layer::INITIALIZER;
 use super::loss::LOSS;
 use super::model::{Metrics, Model, Trainable};
 use crate::core::tensor::Tensor;
 
 use super::layer::Layer;
+use std::error::Error;
+use std::fs::File;
+use std::io::{BufReader, Write};
 
 const GRADIENT_THRESHOLD: f32 = 25.0;
-const MIN_LEARNING: f32 = 0.001;
-const MAX_LR: f32 = 5.0;
+const MIN_LEARNING: f32 = 0.00001;
 const MIN_LR: f32 = 0.1;
 const PATIENCE: usize = 5;
-const LR_AMPLIFICATION_FACTOR: f32 = 1.1;
-const LR_REDUCING_FACTOR: f32 = 0.7;
+const LR_REDUCING_FACTOR: f32 = 0.8;
 
 pub struct NeuralNetwork {
-    layers: Vec<Layer>,
+    pub layers: Vec<Layer>,
     lr: f32,
     loss: fn(&Tensor, &Tensor) -> f32,
     loss_name: LOSS
@@ -73,9 +77,21 @@ impl NeuralNetwork {
 }
 
 pub struct NeuralNetworkModel {
-    network: NeuralNetwork,
+    pub network: NeuralNetwork,
     input_scaler: StandardScaler,
     output_scaler: StandardScaler
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NeuralNetworkSave {
+    weights: Vec<Vec<f32>>,
+    bias: Vec<Vec<f32>>,
+    layers: Vec<usize>,
+    initializers: Vec<INITIALIZER>,
+    activations: Vec<ACTIVATIONS>,
+    loss: LOSS,
+    input_scaler: (Vec<f32>, Vec<f32>),
+    output_scaler: (Vec<f32>, Vec<f32>)
 }
 
 impl NeuralNetworkModel {
@@ -87,6 +103,72 @@ impl NeuralNetworkModel {
             output_scaler: StandardScaler::new(),
         }
     }
+
+    pub fn from_save(save: NeuralNetworkSave) -> Self {
+        let NeuralNetworkSave { weights, bias, layers, activations, loss, input_scaler, output_scaler, initializers } = save;
+        
+        let mut last_size = layers[0];
+        let mut parsed_layers: Vec<Layer> = vec![];
+        for i in 1..layers.len() {
+            let size = layers[i];
+            let mut layer = Layer::new((last_size, size), activations[i - 1], initializers[i - 1]);
+            layer.weights = Tensor::from_shape_vec((last_size, size), weights[i - 1].clone());
+            layer.bias = Tensor::from_vec(bias[i - 1].clone());
+            parsed_layers.push(layer);
+            last_size = size;
+        }
+        
+        let network = NeuralNetwork::new(parsed_layers, 1.0, loss);
+        let input_scaler = StandardScaler::from_data(input_scaler);
+        let output_scaler = StandardScaler::from_data(output_scaler);
+        Self { network, input_scaler, output_scaler }
+    }
+
+    pub fn load_model(path: &str) -> Result<Self, Box<dyn Error>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        
+        let save: NeuralNetworkSave = serde_json::from_reader(reader)?;
+        Ok(Self::from_save(save))
+    }
+
+    pub fn save(&self, path: &str) {
+        let path = std::path::Path::new(path);
+    
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        
+        let mut file = File::create(path).unwrap();
+        
+        let mut weights: Vec<Vec<f32>> = vec![];
+        let mut bias: Vec<Vec<f32>> = vec![];
+        let mut activations: Vec<ACTIVATIONS> = vec![];
+        let mut layers= vec![self.network.layers[0].weights.shape()[0]]; 
+        let mut initializers: Vec<INITIALIZER> = vec![];
+
+        for layer in self.network.layers.iter() {
+            layers.push(layer.weights.shape()[1]);
+            weights.push(layer.weights.to_vec());
+            bias.push(layer.bias.to_vec());
+            activations.push(layer.activation_name);
+            initializers.push(layer.initializer_name);
+        }
+
+        let data = NeuralNetworkSave {
+            weights, 
+            bias,
+            layers,
+            activations,
+            initializers,
+            loss: self.network.loss_name,
+            input_scaler: self.input_scaler.get_data(),
+            output_scaler: self.output_scaler.get_data()
+        };
+        let json_string = serde_json::to_string_pretty(&data).unwrap();
+        file.write(json_string.as_bytes()).unwrap();
+    }
+
 }
 
 impl Trainable for NeuralNetwork {
@@ -186,9 +268,6 @@ impl Model for NeuralNetworkModel {
             }
             if i % PATIENCE == 0 {
                 if last_cost - cost < MIN_LEARNING {
-                    self.network.lr = MAX_LR.min(self.network.lr * LR_AMPLIFICATION_FACTOR);
-                }
-                if cost > last_cost {
                     self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
                 }
             }
@@ -220,9 +299,6 @@ impl Model for NeuralNetworkModel {
             }
             if i % PATIENCE == 0 {
                 if last_cost - cost < MIN_LEARNING {
-                    self.network.lr = MAX_LR.min(self.network.lr * LR_AMPLIFICATION_FACTOR);
-                }
-                if cost > last_cost {
                     self.network.lr = MIN_LR.max(self.network.lr * LR_REDUCING_FACTOR)
                 }
             }

@@ -40,4 +40,16 @@ impl StandardScaler {
     pub fn inverse_transform(&self, x: &Tensor) -> Tensor {
         &self.std * x + &self.mean
     }
+
+    pub fn get_data(&self) -> (Vec<f32>, Vec<f32>) {
+        (self.mean.to_vec(), self.std.to_vec())
+    }
+
+    pub fn from_data(data: (Vec<f32>, Vec<f32>)) -> Self {
+        let (mean, std) = data;
+        let mean = Tensor::from_vec(mean);
+        let std = Tensor::from_vec(std);
+        Self { mean, std } 
+    }
+
 }

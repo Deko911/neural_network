@@ -172,7 +172,7 @@ impl Display for Tensor {
         if self.size() == 1 {
             write!(f, "{}", self.as_f32()) 
         } else {
-            write!(f, "{}", self.data) 
+            write!(f, "{:#.1}", self.data) 
         }
     }
 }

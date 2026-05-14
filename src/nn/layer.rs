@@ -2,9 +2,12 @@
 
 use std::fmt::{Debug, Display};
 
+use serde::{Deserialize, Serialize};
+
 use crate::core::tensor::Tensor;
 use super::activation::ACTIVATIONS;
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum INITIALIZER {
     XAVIER,
     HE
@@ -24,7 +27,8 @@ pub struct Layer {
     pub weights: Tensor,
     pub bias: Tensor,
     activation: fn(&Tensor) -> Tensor,
-    pub activation_name: ACTIVATIONS
+    pub activation_name: ACTIVATIONS,
+    pub initializer_name: INITIALIZER
 }
 
 impl Layer {
@@ -35,7 +39,7 @@ impl Layer {
         let bias = Tensor::zeros((1, shape.1));
         let activation_name = activation;
         let activation = ACTIVATIONS::get_function(activation);
-        Self { weights, bias, activation, activation_name }
+        Self { weights, bias, activation, activation_name, initializer_name: initializer }
     }
 
     //(z, activation)
