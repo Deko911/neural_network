@@ -57,6 +57,61 @@ impl ImageDataset {
 fn main() {
     let dataset = ImageDataset::new(50_000, 10_000);
 
+    let nn = NeuralNetworkModel::load_model("models/numbers.json");
+    if let Err(_) = nn {
+        new_nn(dataset);
+        return;
+    }
+
+    let nn = nn.unwrap();
+
+    let test_inputs = &dataset.test_img;
+    let test_targets = &dataset.test_label;
+
+    //Cost 0.27 - lr 0.5 - 30 epochs - batch_size 100
+    println!("{}", nn.evaluate(&test_inputs, &test_targets));
+
+    //Evaluate one number
+
+    let image_num = 1;
+    let number = dataset.test_img.row(image_num);
+
+    println!("{}", dataset.get_number_matrix(image_num, false));
+    println!("{}", test_targets.row(image_num));
+    println!("{}", nn.predict(&number));
+
+    // Accurate for all tests 91.89% - lr 0.5 - 30 epochs - batch_size 100
+    let size = test_inputs.len();
+    let mut accurate = 0.0;
+
+    for i in 0..size {
+        let input = test_inputs.row(i);
+        let target_vec = test_targets.row(i).to_vec();
+        let mut target = 0;
+        for (i, t) in target_vec.iter().enumerate() {
+            if *t == 1.0 {
+                target = i; 
+            }
+        }
+        
+        let predict_vec = nn.predict(&input).to_vec();
+        let mut max_predict = predict_vec[0];
+        let mut predict = 0;
+        for (i, p) in predict_vec.iter().enumerate() {
+            if *p > max_predict {
+                max_predict = *p;
+                predict = i;
+            }
+        }
+        accurate += if predict == target { 1.0 } else { 0.0 }
+    }
+    accurate = accurate / size as f32;
+    println!("Accurate in {} tests: {}%", size, accurate * 100.0);
+
+}
+
+fn new_nn(dataset: ImageDataset) {
+
     let image_num = 5;
     let number = dataset.test_img.row(image_num);
 
@@ -67,7 +122,7 @@ fn main() {
         Layer::new((16, 16), ACTIVATIONS::SIGMOID, INITIALIZER::XAVIER),
         Layer::new((16, 10), ACTIVATIONS::SOFTMAX, INITIALIZER::XAVIER)
         ], 0.5, Some(neural_network::nn::loss::LOSS::CROSS_ENTROPY));
-    nn.fit(training_inputs, training_targets, 20, 100);
+    nn.fit(training_inputs, training_targets, 30, 100);
 
     let test_inputs = &dataset.test_img;
     let test_targets = &dataset.test_label;
@@ -76,4 +131,6 @@ fn main() {
     println!("{}", dataset.get_number_matrix(image_num, false));
     println!("{}", test_targets.row(image_num));
     println!("{}", nn.predict(&number));
+    nn.save("models/numbers.json");
 }
+
