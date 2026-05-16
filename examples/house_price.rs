@@ -26,7 +26,7 @@ fn main() {
             Layer::new((8, 4), ACTIVATIONS::RELU, INITIALIZER::HE),
             Layer::new((4, 1), ACTIVATIONS::LINEAR, INITIALIZER::XAVIER),
         ],
-        1.0,
+        0.01,
         Some(neural_network::nn::loss::LOSS::QUAD),
     );
 

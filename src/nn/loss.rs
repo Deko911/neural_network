@@ -118,6 +118,7 @@ fn cross_entropy(prediction: &Tensor, target: &Tensor) -> f32 {
     let target = target.to_vec();
     let mut sum = 0.0;
     for (i, pre) in prediction.iter().enumerate() {
+        let pre = pre.clamp(EPS, 1.0 - EPS);
         sum -= target[i]*pre.ln();
     }
     sum

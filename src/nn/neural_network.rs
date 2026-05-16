@@ -12,7 +12,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, Write};
 
-const GRADIENT_THRESHOLD: f32 = 25.0;
+const GRADIENT_THRESHOLD: f32 = 100.0;
 const MIN_LEARNING: f32 = 0.00001;
 const MIN_LR: f32 = 0.1;
 const PATIENCE: usize = 5;
@@ -20,7 +20,7 @@ const LR_REDUCING_FACTOR: f32 = 0.8;
 
 pub struct NeuralNetwork {
     pub layers: Vec<Layer>,
-    lr: f32,
+    pub lr: f32,
     loss: fn(&Tensor, &Tensor) -> f32,
     loss_name: LOSS
 }
@@ -220,8 +220,8 @@ impl Trainable for NeuralNetwork {
         }
         // Update weighs and bias
         for l in 0..self.layers.len() {
-            let mut grad_w = nabla_w_sum[l].clone().unwrap();
-            let mut grad_b = nabla_b_sum[l].clone().unwrap();
+            let mut grad_w = nabla_w_sum[l].clone().unwrap() / n as f32;
+            let mut grad_b = nabla_b_sum[l].clone().unwrap() / n as f32;
 
             if grad_w.norm() > GRADIENT_THRESHOLD {
                 let norm = GRADIENT_THRESHOLD / grad_w.norm();
@@ -233,12 +233,12 @@ impl Trainable for NeuralNetwork {
                 grad_b = grad_b * norm
             }
 
-            let avg_dw = grad_w * (self.lr / n as f32);
-            let avg_db = grad_b * (self.lr / n as f32);
+            let avg_dw = grad_w * self.lr;
+            let avg_db = grad_b * self.lr;
             self.layers[l].weights = &self.layers[l].weights - &avg_dw;
             self.layers[l].bias = &self.layers[l].bias - &avg_db;
         }
-        println!("cost {}", cost);
+        //println!("cost {}", cost);
         return cost;
     }
 }
