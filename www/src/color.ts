@@ -1,12 +1,10 @@
-import init, * as wasm from 'neural_network'
-
-await init()
+import * as wasm from 'neural_network'
 
 let data = new Float32Array([0, 0, 0, 255, 255, 255, 0, 0, 255, 255, 0, 0, 0, 255, 0],);
 let targets = new Float32Array([1, 0, 1, 1, 0]);
 
 let model = new wasm.PerceptronJS(3, 0.2)
-model.fit(data, targets, 15);
+model.fit(data, targets, 15, 0);
 
 console.log(model.predict(new Float32Array([17, 17, 17])));
 

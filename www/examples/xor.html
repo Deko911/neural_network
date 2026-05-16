@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XOR</title>
+    <style>
+        main {
+            width: 400px;
+            height: 400px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .option {
+            width: calc(50% - 10px);
+            height: calc(50% - 10px);
+            border-radius: 15px;
+            place-content: center;
+            text-align: center;
+            background-color: rgb(150, 150, 150);
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+        <script type="module" src="/src/xor.ts"></script>
+        <div class="option" id="0x0">0-0</div>
+        <div class="option" id="0x1">0-1</div>
+        <div class="option" id="1x0">1-0</div>
+        <div class="option" id="1x1">1-1</div>
+    </main>
+    <button id="trainBtn">Train 1 steps</button>
+</body>
+</html>

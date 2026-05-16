@@ -4,7 +4,7 @@ use crate::nn::loss::LOSS;
 use crate::nn::model::{Metrics, Model};
 use crate::nn::perceptron::PerceptronModel;
 use crate::utils::set_panic_hook;
-use crate::wasm::utils::parse_array_to_tensor;
+use crate::wasm::utils::parse_data_to_tensor;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -30,28 +30,28 @@ impl PerceptronJS {
 
     #[wasm_bindgen]
     pub fn evaluate(&self, input: Vec<f32>, target: &[f32]) -> f32 {
-        let input = parse_array_to_tensor(self.input_size, input);
+        let input = parse_data_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
         self.inner.evaluate(&input, target)
     }
 
     #[wasm_bindgen]
     pub fn accurate(&self, input: Vec<f32>, target: &[f32]) -> f32 {
-        let input = parse_array_to_tensor(self.input_size, input);
+        let input = parse_data_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
         self.inner.accurate(&input, &target)
     }
 
     #[wasm_bindgen]
     pub fn fit(&mut self, input: Vec<f32>, target: &[f32], epochs: usize, batch_size: usize) {
-        let input = parse_array_to_tensor(self.input_size, input);
+        let input = parse_data_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
         self.inner.fit(&input, target, epochs, batch_size);
     }
 
     #[wasm_bindgen]
     pub fn fit_raw(&mut self, input: Vec<f32>, target: &[f32], epochs: usize, batch_size: usize) {
-        let input = parse_array_to_tensor(self.input_size, input);
+        let input = parse_data_to_tensor(self.input_size, input);
         let target = &Tensor::from_vec_col(target.to_vec());
         self.inner.fit_raw(&input, target, epochs, batch_size);
     }

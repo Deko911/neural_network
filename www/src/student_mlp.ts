@@ -1,4 +1,5 @@
 import * as wasm from 'neural_network'
+import modelData from "../models/students.json";
 
 let data = new Float32Array([
     2.0, 60.0, 50.0,
@@ -13,9 +14,7 @@ let data = new Float32Array([
 
 let targets = new Float32Array([0, 0, 1, 1, 0, 0, 1, 1]);
 
-let model = new wasm.LogisticRegressionJS(3, 0.2)
-model.fit(data, targets, 100, 0);
-
+let model = wasm.NeuralNetworkJS.load(JSON.stringify(modelData))!;
 console.log(model.evaluate(data, targets));
 
 let studyHours = document.getElementById("study_hours")! as HTMLInputElement;
@@ -24,8 +23,9 @@ let activities = document.getElementById("activities")! as HTMLInputElement;
 
 function predictStudent() {
     let student = new Float32Array([Number(studyHours.value), Number(asistence.value), Number(activities.value)])
+    let option = model.predict(student)[0]
     
-    alert(model.choice(student, ["disapprove", "approve"]))
+    alert(option > 0.5 ? "approve" : "disapprove")
 }
 
 document.getElementById("predict")!.onclick = predictStudent

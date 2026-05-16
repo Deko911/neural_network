@@ -1,5 +1,3 @@
-import init, * as wasm from 'neural_network'
-
-await init()
+import * as wasm from 'neural_network'
 
 wasm.greet()

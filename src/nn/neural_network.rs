@@ -132,15 +132,12 @@ impl NeuralNetworkModel {
         Ok(Self::from_save(save))
     }
 
-    pub fn save(&self, path: &str) {
-        let path = std::path::Path::new(path);
-    
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).unwrap();
-        }
-        
-        let mut file = File::create(path).unwrap();
-        
+    pub fn from_string(str: String) -> Option<Self>{
+        let save: NeuralNetworkSave = serde_json::from_str(&str).ok()?;
+        Some(Self::from_save(save))
+    }
+
+    pub fn to_string(&self) -> String{
         let mut weights: Vec<Vec<f32>> = vec![];
         let mut bias: Vec<Vec<f32>> = vec![];
         let mut activations: Vec<ACTIVATIONS> = vec![];
@@ -165,7 +162,19 @@ impl NeuralNetworkModel {
             input_scaler: self.input_scaler.get_data(),
             output_scaler: self.output_scaler.get_data()
         };
-        let json_string = serde_json::to_string_pretty(&data).unwrap();
+        serde_json::to_string_pretty(&data).unwrap()
+    }
+
+    pub fn save(&self, path: &str) {
+        let path = std::path::Path::new(path);
+    
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).unwrap();
+        }
+        
+        let mut file = File::create(path).unwrap();
+        
+        let json_string = self.to_string();
         file.write(json_string.as_bytes()).unwrap();
     }
 

@@ -1,12 +1,12 @@
-//XOR Perceptron - Sigmoid: Accurate - 0.5, Evaluation - 0.89, Epochs - 150
-
 use std::fmt::{Debug, Display};
+use wasm_bindgen::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
 use crate::core::tensor::Tensor;
 use super::activation::ACTIVATIONS;
 
+#[wasm_bindgen]
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum INITIALIZER {
     XAVIER,

@@ -1,12 +1,10 @@
-import init, * as wasm from 'neural_network'
-
-await init()
+import * as wasm from 'neural_network'
 
 let data = new Float32Array([-20, -10, 0, 10, 20]);
 let targets = new Float32Array([-4, 14, 32, 50 ,68]);
 
 let model = new wasm.PerceptronJS(1, 1.0)
-model.fit(data, targets, 15);
+model.fit(data, targets, 15, 0);
 
 
 let temperatureRange = document.getElementById("temperature")! as HTMLInputElement;
