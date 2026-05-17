@@ -122,7 +122,7 @@ fn new_nn(dataset: ImageDataset) {
         Layer::new((16, 16), ACTIVATIONS::RELU, INITIALIZER::HE),
         Layer::new((16, 10), ACTIVATIONS::SOFTMAX, INITIALIZER::XAVIER)
         ], 0.17, Some(neural_network::nn::loss::LOSS::CROSS_ENTROPY));
-    nn.fit(training_inputs, training_targets, 30, 100);
+    nn.fit_raw(training_inputs, training_targets, 30, 100);
 
     let test_inputs = &dataset.test_img;
     let test_targets = &dataset.test_label;

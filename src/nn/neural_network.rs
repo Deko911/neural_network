@@ -275,6 +275,7 @@ impl Model for NeuralNetworkModel {
             for (batch_i, batch_t) in batches {
                 cost += self.network.train_step(&batch_i, &batch_t) / n_batches as f32;
             }
+            println!("cost batch {}", cost);
             if last_cost.is_nan(){
                 last_cost = cost;
                 continue;
